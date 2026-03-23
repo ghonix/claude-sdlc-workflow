@@ -1,5 +1,7 @@
 # SDLC Workflow for Claude Code
 
+![Version](https://img.shields.io/badge/version-v1.0.0-blue?style=flat)
+
 A structured, agent-driven Software Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each with a specialized agent, a concrete artifact, and a human gate.
 
 ---
@@ -375,3 +377,20 @@ Use the sdlc-qa agent to define acceptance criteria for [plan]
 Use the sdlc-implementer agent to implement [steps]
 Use the sdlc-verifier agent to verify [implementation]
 ```
+
+---
+
+## Changelog
+
+### v1.0.0
+
+Initial release.
+
+- 5-phase pipeline: Research → Plan → QA → Implement → Verify
+- 7 agents: orchestrator + 5 phase agents + code-reviewer
+- Parallel wave execution via planner's execution graph
+- Shift-left QA with acceptance criteria defined before implementation
+- Feature gating discovery, strategy design, and enforcement across all phases
+- Human gates between every phase with skip/revise/abort options
+- File-based artifact passing via `.sdlc/` directory
+- Model allocation: opus for reasoning (Plan, Verify), sonnet for execution (Research, QA, Implement)

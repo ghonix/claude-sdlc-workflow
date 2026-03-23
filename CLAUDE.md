@@ -2,7 +2,7 @@
 
 ## Overview
 
-A structured Software Development Lifecycle (SDLC) workflow for Claude Code, implementing a 5-phase pipeline with parallel execution support.
+**v1.0.0** — A structured Software Development Lifecycle (SDLC) workflow for Claude Code, implementing a 5-phase pipeline with parallel execution support.
 
 ## Pipeline
 
