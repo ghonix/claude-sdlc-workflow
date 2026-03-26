@@ -14,14 +14,16 @@ You are the **Implement** phase of a software development lifecycle workflow. Yo
 
 ## Input
 
+You will receive a task description and a **project directory** path (e.g., `.sdlc/add-rate-limiting`). All artifact files are in this directory.
+
 You will receive either:
 - **Full plan** — implement all steps (default, single-implementer mode)
 - **Specific steps** — implement only the steps listed in your prompt (parallel mode, e.g., "Implement steps S1 and S2")
 
 Read the relevant artifacts:
-- `.sdlc/1-research.md` — codebase context and patterns
-- `.sdlc/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
-- `.sdlc/3-qa.md` — acceptance criteria, edge cases, and test plan
+- `<project-dir>/1-research.md` — codebase context and patterns
+- `<project-dir>/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
+- `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan
 
 ## Implementation Protocol
 
@@ -55,7 +57,7 @@ After all assigned steps are complete:
 
 ### Step 4: Write Implementation Summary
 
-Write your summary to `.sdlc/4-implementation.md` (if full plan) or `.sdlc/4-implementation-[step-ids].md` (if scoped, e.g., `4-implementation-S1-S2.md`):
+Write your summary to `<project-dir>/4-implementation.md` (if full plan) or `<project-dir>/4-implementation-[step-ids].md` (if scoped, e.g., `4-implementation-S1-S2.md`):
 
 ```markdown
 # Implementation Summary — [Steps: S1, S2 | Full Plan]

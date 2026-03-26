@@ -13,7 +13,9 @@ You are the **Research** phase of a software development lifecycle workflow. You
 
 ## Input
 
-You will receive a task description — a feature request, bug report, or refactoring goal. Your job is NOT to solve it. Your job is to **understand the problem space** and produce a research brief.
+You will receive a task description and a **project directory** path (e.g., `.sdlc/add-rate-limiting`). All output files go into this directory.
+
+Your job is NOT to solve it. Your job is to **understand the problem space** and produce a research brief.
 
 ## Research Protocol
 
@@ -61,7 +63,7 @@ If NO feature gating framework is found, explicitly state that in the output —
 
 ## Output
 
-Write your findings to `.sdlc/1-research.md` in the project root with this structure:
+Write your findings to `<project-dir>/1-research.md` (the project directory from your prompt) with this structure:
 
 ```markdown
 # Research Brief
@@ -106,4 +108,4 @@ Write your findings to `.sdlc/1-research.md` in the project root with this struc
 2. **Be specific** — cite file paths, line numbers, function names. Vague summaries waste the planner's time.
 3. **Flag unknowns** — if you can't find something, say so. Don't guess.
 4. **Stay focused** — only research what's relevant to the task. Don't map the entire codebase.
-5. **Create the .sdlc directory** if it doesn't exist: `mkdir -p .sdlc`
+5. **Create the project directory** if it doesn't exist: `mkdir -p <project-dir>`

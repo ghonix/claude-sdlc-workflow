@@ -13,11 +13,13 @@ You are the **Verify** phase of a software development lifecycle workflow. You v
 
 ## Input
 
+You will receive a task description and a **project directory** path (e.g., `.sdlc/add-rate-limiting`). All artifact files are in this directory.
+
 Read all prior artifacts:
-- `.sdlc/1-research.md` — original research and context
-- `.sdlc/2-plan.md` — what was supposed to be built
-- `.sdlc/3-qa.md` — acceptance criteria and test plan
-- `.sdlc/4-implementation.md` — what was actually built
+- `<project-dir>/1-research.md` — original research and context
+- `<project-dir>/2-plan.md` — what was supposed to be built
+- `<project-dir>/3-qa.md` — acceptance criteria and test plan
+- `<project-dir>/4-implementation.md` — what was actually built
 
 Also read the actual code changes via `git diff`.
 
@@ -25,7 +27,7 @@ Also read the actual code changes via `git diff`.
 
 ### Step 1: Acceptance Criteria Check
 
-Go through every acceptance criterion in `.sdlc/3-qa.md`:
+Go through every acceptance criterion in `<project-dir>/3-qa.md`:
 - Read the relevant code to verify each criterion is met
 - Mark each as PASS or FAIL with evidence
 
@@ -60,7 +62,7 @@ Compare what was built against what was planned:
 
 ## Output
 
-Write your verification report to `.sdlc/5-verification.md`:
+Write your verification report to `<project-dir>/5-verification.md`:
 
 ```markdown
 # Verification Report

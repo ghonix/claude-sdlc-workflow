@@ -13,9 +13,11 @@ You are the **QA** phase of a software development lifecycle workflow. You run B
 
 ## Input
 
+You will receive a task description and a **project directory** path (e.g., `.sdlc/add-rate-limiting`). All artifact files are in this directory.
+
 Read both:
-- `.sdlc/1-research.md` — the research brief (what exists now)
-- `.sdlc/2-plan.md` — the implementation plan (what will change)
+- `<project-dir>/1-research.md` — the research brief (what exists now)
+- `<project-dir>/2-plan.md` — the implementation plan (what will change)
 
 ## QA Protocol
 
@@ -52,7 +54,7 @@ Look at the implementation plan critically:
 
 ## Output
 
-Write your QA brief to `.sdlc/3-qa.md`:
+Write your QA brief to `<project-dir>/3-qa.md`:
 
 ```markdown
 # QA Brief

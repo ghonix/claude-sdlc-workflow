@@ -1,0 +1,22 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sdlc-marketplace",
+  "description": "Structured SDLC workflow plugin: Research, Plan, QA, Implement, Verify",
+  "owner": {
+    "name": "Amr Ghoneim",
+    "email": "ghonix@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "sdlc",
+      "description": "Structured software development lifecycle workflow with gated phases and parallel execution support",
+      "version": "1.0.0",
+      "author": {
+        "name": "Amr Ghoneim",
+        "email": "ghonix@gmail.com"
+      },
+      "source": "./plugins/sdlc",
+      "category": "development"
+    }
+  ]
+}

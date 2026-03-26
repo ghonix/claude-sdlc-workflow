@@ -1,0 +1,8 @@
+{
+  "name": "sdlc",
+  "description": "Structured software development lifecycle workflow: Research → Plan → QA → Implement → Verify. Gated phases with parallel execution support.",
+  "author": {
+    "name": "Amr Ghoneim",
+    "email": "ghonix@gmail.com"
+  }
+}
