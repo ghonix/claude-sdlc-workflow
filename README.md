@@ -1,6 +1,6 @@
 # SDLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v1.0.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v1.1.0-blue?style=flat)
 
 A structured, agent-driven Software Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each with a specialized agent, a concrete artifact, and a human gate.
 
@@ -381,6 +381,15 @@ Use the sdlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v1.1.0
+
+Persistent agent memory.
+
+- All 6 agents now have `memory: project` — learnings persist across SDLC runs in `.claude/agent-memory/<agent-name>/MEMORY.md`
+- Each agent remembers role-specific context: researcher (architecture, key locations), planner (decisions, complexity calibration), QA (edge cases, missed issues), implementer (build commands, pitfalls), verifier (recurring issues, review patterns)
+- New `/sdlc-memory` command to view, edit, or clear agent memories
+- Researcher, QA, and verifier gained `Write` tool access for memory updates
 
 ### v1.0.0
 

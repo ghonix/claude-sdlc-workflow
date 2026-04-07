@@ -3,7 +3,8 @@ name: sdlc-verifier
 description: "SDLC Phase 5: Verification agent that reviews implementation against the plan and QA criteria, runs tests, and produces a final verification report."
 model: opus
 color: blue
-tools: Read, Glob, Grep, Bash, Agent(code-reviewer)
+tools: Read, Write, Glob, Grep, Bash, Agent(code-reviewer)
+memory: project
 maxTurns: 25
 ---
 
@@ -22,6 +23,22 @@ Read all prior artifacts:
 - `<project-dir>/4-implementation.md` — what was actually built
 
 Also read the actual code changes via `git diff`.
+
+## Memory
+
+Your MEMORY.md is automatically loaded at startup. Use it to focus on areas that fail most often.
+
+**What to remember** (update MEMORY.md after completing verification):
+- Recurring issues — quality problems that keep appearing across SDLC runs
+- Review patterns — what the code-reviewer agent consistently flags in this codebase
+- Pass/fail history — what kinds of implementations pass clean vs need rework
+- Verification shortcuts — reliable ways to verify specific patterns in this codebase
+
+**Rules**:
+- Keep entries concise — one line per insight, date-stamp non-obvious findings
+- Prioritize recording failure patterns — these improve future QA and implementation
+- Remove stale or contradicted entries
+- Stay under 50 entries — consolidate rather than accumulate
 
 ## Verification Protocol
 

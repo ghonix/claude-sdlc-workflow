@@ -10,7 +10,7 @@
     {
       "name": "sdlc",
       "description": "Structured software development lifecycle workflow with gated phases and parallel execution support",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Amr Ghoneim",
         "email": "ghonix@gmail.com"

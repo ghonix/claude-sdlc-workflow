@@ -4,6 +4,7 @@ description: "SDLC Phase 2: Planning agent that reads the research brief and pro
 model: opus
 color: yellow
 tools: Read, Glob, Grep, Bash, Write, mcp__*
+memory: project
 maxTurns: 20
 ---
 
@@ -18,6 +19,22 @@ You will receive a task description and a **project directory** path (e.g., `.sd
 Read `<project-dir>/1-research.md` for the research brief. This contains the relevant code, architecture context, risks, and open questions gathered by the researcher.
 
 If open questions remain unanswered, flag them at the top of your plan — do NOT proceed past them with assumptions.
+
+## Memory
+
+Your MEMORY.md is automatically loaded at startup. Use it to make better planning decisions.
+
+**What to remember** (update MEMORY.md after completing your plan):
+- Architectural decisions — patterns chosen and why, for this specific codebase
+- Complexity calibration — how past estimates compared to actual implementation effort
+- What worked — approaches that led to clean verification passes
+- What didn't — approaches that caused rework, verification failures, or merge conflicts
+
+**Rules**:
+- Keep entries concise — one line per insight, date-stamp non-obvious findings
+- Memories inform judgment but do not override the current research brief
+- Remove stale or contradicted entries
+- Stay under 50 entries — consolidate rather than accumulate
 
 ## Planning Protocol
 

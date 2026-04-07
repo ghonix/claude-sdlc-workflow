@@ -2,7 +2,7 @@
 
 ## Overview
 
-**v1.0.0** — A structured Software Development Lifecycle (SDLC) workflow for Claude Code, implementing a 5-phase pipeline with parallel execution support.
+**v1.1.0** — A structured Software Development Lifecycle (SDLC) workflow for Claude Code, implementing a 5-phase pipeline with parallel execution support.
 
 ## Pipeline
 
@@ -58,3 +58,23 @@ For parallel execution, implementers write scoped summaries: `4-implementation-S
 - **Feature gating**: Researcher discovers the project's gating framework, planner designs the strategy, implementer enforces it
 - **Parallel waves**: Planner groups independent steps into waves; orchestrator dispatches parallel implementers per wave
 - **File-based data passing**: Each phase writes a `.sdlc/*.md` artifact — survives context limits, human-reviewable between phases
+- **Persistent memory**: Agents learn across SDLC runs via `memory: project` — codebase patterns, past decisions, and failure patterns survive between sessions
+
+## Agent Memory
+
+All SDLC agents have persistent memory enabled (`memory: project` scope). Memories are stored in `.claude/agent-memory/<agent-name>/MEMORY.md` in the consuming project.
+
+Each agent remembers role-specific learnings:
+- **Researcher**: codebase architecture, key locations, feature gating details
+- **Planner**: architectural decisions, complexity calibration, what worked/didn't
+- **QA**: common edge cases, frequently missed issues, testing patterns
+- **Implementer**: build/test commands, coding conventions, common pitfalls
+- **Verifier**: recurring quality issues, review patterns, pass/fail history
+
+Manage memories with `/sdlc-memory`:
+```
+/sdlc-memory              # view all agent memories
+/sdlc-memory view qa      # view specific agent's memory
+/sdlc-memory edit planner # edit an agent's memory
+/sdlc-memory clear        # clear all memories
+```

@@ -4,6 +4,7 @@ description: "SDLC Phase 4: Implementation agent that writes code following the 
 model: sonnet
 color: green
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, WebSearch
+memory: project
 maxTurns: 50
 permissionMode: acceptEdits
 ---
@@ -24,6 +25,22 @@ Read the relevant artifacts:
 - `<project-dir>/1-research.md` — codebase context and patterns
 - `<project-dir>/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
 - `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan
+
+## Memory
+
+Your MEMORY.md is automatically loaded at startup. Use it to avoid repeating past mistakes.
+
+**What to remember** (update MEMORY.md after completing implementation):
+- Build & test commands — exact commands that work for this project (e.g., `pnpm test`, `go test ./...`)
+- Coding patterns — conventions followed in this codebase (e.g., error handling style, naming)
+- Common pitfalls — things that caused test failures or verification rework
+- Environment notes — setup quirks, required env vars, database seeds, CI expectations
+
+**Rules**:
+- Keep entries concise — one line per insight, date-stamp non-obvious findings
+- Only record learnings that generalize across tasks, not task-specific details
+- Remove stale or contradicted entries
+- Stay under 50 entries — consolidate rather than accumulate
 
 ## Implementation Protocol
 
