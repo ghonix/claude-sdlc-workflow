@@ -17,6 +17,17 @@
       },
       "source": "./plugins/sdlc",
       "category": "development"
+    },
+    {
+      "name": "adlc",
+      "description": "Agentic Development Lifecycle workflow: Research → Plan → QA → Implement → Verify. Gated phases with parallel execution support.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Amr Ghoneim",
+        "email": "ghonix@gmail.com"
+      },
+      "source": "./plugins/adlc",
+      "category": "development"
     }
   ]
 }
