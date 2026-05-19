@@ -30,6 +30,32 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `standard` | Full planning protocol as described below. Map current and proposed architecture, evaluate alternatives, design gating strategy, build execution graph with parallel waves. ~15-20 tool calls. |
 | `thorough` | Everything in standard, plus: verify every file reference by reading the actual code, search for cross-repo examples of the chosen approach via MCP tools, add detailed rollback plan per step, document invariants that must hold across all steps. ~20-30 tool calls. |
 
+## Mode (Architect vs Breakdown Split)
+
+Your prompt may include a `Mode` parameter to do only part of the planning work. The orchestrator splits opus-reasoning from mechanical work for efficiency.
+
+| Mode | Focus | Output File |
+|------|-------|-------------|
+| `architect` | Current architecture, proposed architecture, alternatives analysis, gating strategy, design approach. NO step breakdown, NO execution graph. | `2-architecture.md` |
+| `breakdown` | Read `2-architecture.md` and produce step breakdown, file lists, dependencies, execution graph with parallel waves. NO architecture re-analysis. | `2-plan.md` + `2-plan-brief.md` |
+| `critique` | Read `2-architecture.md` and act as devil's advocate — list problems with the chosen approach, surface missed alternatives, challenge assumptions. Output critique to `2-architecture-critique.md`. Used in `thorough` depth only. | `2-architecture-critique.md` |
+
+If `Mode` is absent, do the full Planning Protocol below and write to `2-plan.md` + `2-plan-brief.md` directly.
+
+**Recommended model per mode**:
+- `architect` and `critique` → opus (reasoning-heavy)
+- `breakdown` → sonnet (mechanical)
+
+## Tiered Output
+
+When producing `2-plan.md`, also produce `2-plan-brief.md` (compact, ~30% of full size). The brief contains:
+- Approach (1 paragraph)
+- Implementation Steps (titles + file lists + dependencies only — no rationale prose)
+- Execution Graph (table)
+- Feature Gating (flag name + placement only)
+
+The brief is what implementers will read. Also produce per-step briefs at `2-plan-S1.md`, `2-plan-S2.md`, etc. — each contains only that step's section + relevant gating + 1-line reference to architecture.
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to make better planning decisions.

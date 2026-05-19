@@ -1,163 +1,265 @@
 ---
-description: Run the full ADLC pipeline (Research → Plan → QA → Implement → Verify)
+description: Run the full ADLC pipeline (Research → Plan → QA → Implement → Verify) with parallel sub-agents
 argument-hint: Task or feature description
 allowed-tools: Read, Write, Glob, Grep, Bash, AskUserQuestion
 ---
 
-# ADLC Pipeline
+# ADLC Pipeline (Parallel)
 
-Coordinate the full agentic development lifecycle for the given task. You are the conductor — invoke the right phase agent at the right time and gate each phase on human approval. Do NOT do the phase work yourself.
+Coordinate the full agentic development lifecycle. You are the conductor — spawn the right agents (often in parallel) and gate each phase on human approval. Do NOT do the phase work yourself.
 
 Task: $ARGUMENTS
 
 ## Depth
 
-Before starting the pipeline, check if the user's task description includes a depth hint: `quick`, `standard`, or `thorough`. Examples:
-- "Add rate limiting to the API" → no hint → use `standard`
+Check if the user's task description includes a depth hint: `quick`, `standard`, or `thorough`. Extract and strip it. If absent, default to **standard**.
+
+Examples:
+- "Add rate limiting to the API" → no hint → `standard`
 - "quick: fix the typo in the error message" → `quick`
 - "thorough: redesign the authentication module" → `thorough`
 
-Extract the depth keyword if present (strip it from the task description). If absent, default to **standard**.
-
-Pass the depth to every sub-agent by including this line in each agent prompt:
-```
-Depth: <quick|standard|thorough>
-```
-
-The depth hint scales how much work each agent does — from minimal (quick) to exhaustive (thorough). Each agent defines its own behavior per depth level.
-
-## Pipeline
-
-```
-Research → [Gate] → Plan → [Gate] → QA → [Gate] → Implement (parallel waves) → [Gate] → Verify → Done
-```
+Pass `Depth: <level>` to every sub-agent prompt.
 
 ## Project Directory
 
-Before starting any phase, create a project-specific directory under `.adlc/`:
+Derive a kebab-case slug from the task (e.g., "Add rate limiting" → `add-rate-limiting`). Create `mkdir -p .adlc/<slug>`. All artifacts go in this directory.
 
-1. Derive a short, kebab-case slug from the task description (e.g., "Add rate limiting to API" → `add-rate-limiting`)
-2. Create the directory: `mkdir -p .adlc/<slug>`
-3. All phase artifacts go into this directory (e.g., `.adlc/add-rate-limiting/1-research.md`)
-4. Pass the project directory path to every sub-agent as part of the prompt
+## Triviality Gate (Quick Path)
 
-The project directory keeps artifacts organized when running ADLC for multiple tasks.
+Before Phase 1, decide if the task qualifies for the **quick path**:
+- Depth is `quick`, OR
+- Task description matches trivial patterns (typo fix, single string change, comment edit, single-line config)
 
-## Workflow
+If quick path applies, run a **collapsed pipeline**:
+1. Spawn researcher with `Scope: code` only (skip patterns, history, synthesis)
+2. Skip Plan phase entirely — write a 1-step minimal plan template
+3. Skip QA phase entirely — implementer reads research + makes change directly
+4. Spawn implementer with `Mode: both, Depth: quick`
+5. Spawn verifier with `Mode: criteria-check, test-run` only (parallel) + `synthesize`
 
-### Phase 1: Research
+Skip ALL human gates in the quick path unless verification fails. Surface only the final verdict.
 
-Invoke the researcher agent:
-```
-Agent(subagent_type="adlc-researcher", description="Research: [task summary]", prompt="Project directory: .adlc/<slug>\n\n[full task description from the user]")
-```
+Otherwise, proceed to the **standard pipeline** below.
 
-After the researcher completes, read `.adlc/<slug>/1-research.md` and present a **brief summary** to the user:
-- Key files involved
-- Risks identified
-- Open questions (if any)
-
-**Ask the user**: "Research is complete. Review `.adlc/<slug>/1-research.md` for full details. Should I proceed to planning, or do you want to adjust the research?"
-
-### Phase 2: Plan
-
-Invoke the planner agent:
-```
-Agent(subagent_type="adlc-planner", description="Plan: [task summary]", prompt="Project directory: .adlc/<slug>\n\nRead .adlc/<slug>/1-research.md and create an implementation plan. Task: [task description]")
-```
-
-After the planner completes, read `.adlc/<slug>/2-plan.md` and present:
-- Current vs proposed architecture (1-2 sentences each)
-- Number of implementation steps and waves
-- Which steps run in parallel vs sequential
-- Key risks and mitigations
-
-**Ask the user**: "Plan is ready. Review `.adlc/<slug>/2-plan.md` for the full plan. Should I proceed to QA, or do you want to revise the plan?"
-
-### Phase 3: QA (Shift-Left)
-
-Invoke the QA agent:
-```
-Agent(subagent_type="adlc-qa", description="QA: [task summary]", prompt="Project directory: .adlc/<slug>\n\nRead .adlc/<slug>/1-research.md and .adlc/<slug>/2-plan.md. Define acceptance criteria and test plan. Task: [task description]")
-```
-
-After QA completes, read `.adlc/<slug>/3-qa.md` and present:
-- Number of acceptance criteria
-- Critical edge cases identified
-- Any gaps found in the plan
-
-**Ask the user**: "QA brief is ready. Review `.adlc/<slug>/3-qa.md` for acceptance criteria and test plan. Should I proceed to implementation?"
-
-### Phase 4: Implement (Parallel Waves)
-
-Read the **Execution Graph** from `.adlc/<slug>/2-plan.md` to determine the wave structure.
-
-#### Single-wave plan (all steps sequential or only 1 wave)
-
-Invoke one implementer for the full plan:
-```
-Agent(subagent_type="adlc-implementer", description="Implement: [task summary]", prompt="Project directory: .adlc/<slug>\n\nRead .adlc/<slug>/1-research.md, .adlc/<slug>/2-plan.md, and .adlc/<slug>/3-qa.md. Implement all steps. Task: [task description]")
-```
-
-#### Multi-wave plan (parallel steps exist)
-
-Execute waves sequentially. Within each wave, launch one implementer agent per step **in parallel**:
+## Standard Pipeline
 
 ```
-# Wave 1 — launch all steps in parallel
-Agent(subagent_type="adlc-implementer", description="Implement S1", prompt="Project directory: .adlc/<slug>\n\nImplement step S1 only. Read .adlc/<slug>/1-research.md, .adlc/<slug>/2-plan.md, .adlc/<slug>/3-qa.md. Task: [task description]", run_in_background=true)
-Agent(subagent_type="adlc-implementer", description="Implement S2", prompt="Project directory: .adlc/<slug>\n\nImplement step S2 only. Read .adlc/<slug>/1-research.md, .adlc/<slug>/2-plan.md, .adlc/<slug>/3-qa.md. Task: [task description]", run_in_background=true)
-
-# Wait for Wave 1 to complete, then launch Wave 2
-Agent(subagent_type="adlc-implementer", description="Implement S3", prompt="Project directory: .adlc/<slug>\n\nImplement step S3 only. Read .adlc/<slug>/1-research.md, .adlc/<slug>/2-plan.md, .adlc/<slug>/3-qa.md. Task: [task description]")
+Research (3 parallel scopes + synthesize)
+  → [Gate]
+  → Plan (architect → breakdown, +critique if thorough)
+  → [Gate]
+  → QA (criteria || adversary → synthesize)
+  → [Gate]
+  → Implement (parallel waves, coder || tester per step, compact briefs)
+  → [Gate]
+  → Verify (4 parallel evidence agents → synthesize)
 ```
 
-**Important**: Parallel steps within a wave MUST NOT modify the same files. The planner guarantees this in the execution graph. If you detect a file conflict, fall back to sequential execution for those steps.
+## Phase 1: Research (Parallel Sub-Researchers)
 
-After all waves complete, read all `.adlc/<slug>/4-implementation-*.md` files and present:
-- Files changed per wave
-- Tests added
-- Any deviations from plan
-- Any acceptance criteria not met
+Spawn 3 researchers in parallel using a single message with multiple Agent calls:
 
-**Ask the user**: "Implementation is complete. Review the implementation summaries and code changes. Should I proceed to verification?"
-
-### Phase 5: Verify
-
-Invoke the verifier agent:
 ```
-Agent(subagent_type="adlc-verifier", description="Verify: [task summary]", prompt="Project directory: .adlc/<slug>\n\nRead all .adlc/<slug>/*.md artifacts and verify the implementation. Run tests and code review. Task: [task description]")
+Agent(subagent_type="adlc-researcher", description="Research: code scope",
+  prompt="Project directory: .adlc/<slug>\nScope: code\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-researcher", description="Research: patterns scope",
+  prompt="Project directory: .adlc/<slug>\nScope: patterns\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-researcher", description="Research: history scope",
+  prompt="Project directory: .adlc/<slug>\nScope: history\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
 ```
 
-After verification completes, read `.adlc/<slug>/5-verification.md` and present the final verdict:
-- Overall status (PASS / FAIL / PASS WITH NOTES)
-- Critical issues (if any)
-- Test results
-- Recommendation
+When all three complete, spawn a synthesizer:
+```
+Agent(subagent_type="adlc-researcher", description="Synthesize research",
+  prompt="Project directory: .adlc/<slug>\nScope: synthesize\nDepth: <depth>\n\nTask: <task>")
+```
 
-If **PASS**: "Verification passed. The changes are ready for commit. Would you like me to commit, or do you want to review first?"
+The synthesizer produces `1-research.md` (full) + `1-research-brief.md` (compact).
 
-If **FAIL**: "Verification found issues. [List issues]. Would you like me to re-run implementation to fix these, or do you want to handle them manually?"
+Present a brief summary to the user (key files, top risks, open questions).
+
+**Gate**: "Research is complete. Review `.adlc/<slug>/1-research.md`. Proceed to planning?"
+
+## Phase 2: Plan (Architect → Breakdown)
+
+### Step 2a: Architect (opus)
+
+```
+Agent(subagent_type="adlc-planner", description="Architect approach",
+  prompt="Project directory: .adlc/<slug>\nMode: architect\nDepth: <depth>\n\nRead 1-research-brief.md. Task: <task>")
+```
+
+Produces `2-architecture.md`.
+
+### Step 2b: Critique (opus, optional)
+
+If `Depth: thorough`, spawn critic in parallel with breakdown:
+```
+Agent(subagent_type="adlc-planner", description="Critique architecture",
+  prompt="Project directory: .adlc/<slug>\nMode: critique\nDepth: <depth>\n\nRead 2-architecture.md. Task: <task>",
+  run_in_background=true)
+```
+
+Produces `2-architecture-critique.md`. The breakdown agent should read it.
+
+### Step 2c: Breakdown (sonnet)
+
+```
+Agent(subagent_type="adlc-planner", description="Plan breakdown",
+  prompt="Project directory: .adlc/<slug>\nMode: breakdown\nDepth: <depth>\n\nRead 2-architecture.md (and 2-architecture-critique.md if present). Task: <task>")
+```
+
+Produces `2-plan.md` + `2-plan-brief.md` + per-step `2-plan-S<N>.md` files.
+
+Present summary (architecture summary, step count, wave count, key risks).
+
+**Gate**: "Plan is ready. Review `.adlc/<slug>/2-plan.md`. Proceed to QA?"
+
+## Phase 3: QA (Parallel Criteria + Adversary → Synthesize)
+
+Spawn criteria + adversary in parallel:
+```
+Agent(subagent_type="adlc-qa", description="QA criteria",
+  prompt="Project directory: .adlc/<slug>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-qa", description="QA adversary",
+  prompt="Project directory: .adlc/<slug>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
+  run_in_background=true)
+```
+
+When both complete:
+```
+Agent(subagent_type="adlc-qa", description="QA synthesize",
+  prompt="Project directory: .adlc/<slug>\nMode: synthesize\nDepth: <depth>\n\nMerge 3-qa-criteria.md and 3-qa-adversary.md.")
+```
+
+Produces `3-qa.md` + `3-qa-brief.md` + per-step `3-qa-S<N>.md` files.
+
+Present summary (criteria count, top edge cases, plan gaps).
+
+**Gate**: "QA brief is ready. Review `.adlc/<slug>/3-qa.md`. Proceed to implementation?"
+
+## Phase 4: Implement (Parallel Waves + Coder/Tester Split)
+
+Read the Execution Graph from `2-plan-brief.md`.
+
+### Per-step spawning
+
+For each step in the current wave, choose between:
+
+**Combined mode** (default, simpler): one implementer per step with `Mode: both`.
+```
+Agent(subagent_type="adlc-implementer", description="Implement S1",
+  prompt="Project directory: .adlc/<slug>\nMode: both\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1. Task: <task>",
+  run_in_background=true)
+```
+
+**Split mode** (faster for non-trivial steps): spawn coder + tester for the same step in parallel.
+```
+Agent(subagent_type="adlc-implementer", description="Code S1",
+  prompt="Project directory: .adlc/<slug>\nMode: coder\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1 code only. Task: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-implementer", description="Test S1",
+  prompt="Project directory: .adlc/<slug>\nMode: tester\nDepth: <depth>\nUse compact briefs: true\n\nWrite tests for step S1 only. Task: <task>",
+  run_in_background=true)
+```
+
+Use split mode when the step involves >1 file of implementation AND has >2 acceptance criteria. Otherwise use combined mode.
+
+### Wave coordination
+
+Execute waves sequentially. Within each wave, launch all step agents (combined or split) in a single message with multiple tool calls so they run concurrently.
+
+**Important**: Parallel steps within a wave MUST NOT modify the same files. Coder + tester for the SAME step can run in parallel because the tester writes test files (different paths) while the coder writes implementation files.
+
+### Inner fix loop
+
+If a wave finishes with test failures, spawn:
+```
+Agent(subagent_type="adlc-implementer", description="Fix S<N>",
+  prompt="Project directory: .adlc/<slug>\nMode: fixer\nDepth: <depth>\n\nTest failures for step S<N>:\n<failure output>\n\nMake minimal targeted fix.")
+```
+
+Cap at 2 fix attempts per step. If still failing, escalate by surfacing the failure in the gate message — do NOT proceed to verify.
+
+After all waves complete, read all `4-implementation-*.md` files and present (files changed, tests added, deviations, unmet criteria).
+
+**Gate**: "Implementation complete. Proceed to verification?"
+
+## Phase 5: Verify (Parallel Evidence → Synthesize)
+
+Spawn 3-4 evidence-gathering verifiers in parallel:
+```
+Agent(subagent_type="adlc-verifier", description="Verify: criteria",
+  prompt="Project directory: .adlc/<slug>\nMode: criteria-check\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-verifier", description="Verify: tests",
+  prompt="Project directory: .adlc/<slug>\nMode: test-run\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+
+Agent(subagent_type="adlc-verifier", description="Verify: regression",
+  prompt="Project directory: .adlc/<slug>\nMode: regression-check\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+```
+
+**Conditionally spawn code-review**: Check `git diff --shortstat` first. If diff > 50 lines OR depth is `thorough`, ALSO spawn:
+```
+Agent(subagent_type="adlc-verifier", description="Verify: code review",
+  prompt="Project directory: .adlc/<slug>\nMode: code-review\nDepth: <depth>\n\nTask: <task>",
+  run_in_background=true)
+```
+
+When all evidence agents complete, spawn synthesizer (opus):
+```
+Agent(subagent_type="adlc-verifier", description="Verify: synthesize",
+  prompt="Project directory: .adlc/<slug>\nMode: synthesize\nDepth: <depth>\n\nRead all 5-verify-*.md files. Task: <task>")
+```
+
+Produces `5-verification.md`.
+
+Present final verdict (status, critical issues, test results, recommendation).
+
+- **PASS**: "Verification passed. Ready for commit. Commit now or review first?"
+- **FAIL**: "Verification found issues: [list]. Re-run implementation to fix, or handle manually?"
+
+## Memory Priming
+
+Before spawning each phase's agents, scan the agent's MEMORY.md for entries tagged with keywords from the task description. Inject the top 3 most relevant memory entries into the agent prompt as:
+```
+Relevant memories:
+- <entry 1>
+- <entry 2>
+- <entry 3>
+```
+
+This avoids forcing the agent to re-read its full MEMORY.md and focuses its attention.
 
 ## Phase Skipping
 
-If the user asks to skip a phase, allow it but warn them:
-- Skipping Research: "The planner will work without codebase context — the plan may miss existing patterns."
-- Skipping Plan: "The implementer will work without a structured plan — results may be less organized."
-- Skipping QA: "The implementer will work without acceptance criteria — verification will only check code quality, not correctness against requirements."
-- Skipping Verify: "Changes won't be formally reviewed — consider running `code-reviewer` manually."
+If the user asks to skip a phase, allow it but warn:
+- Skip Research: planner has no codebase context — may miss patterns
+- Skip Plan: implementer freelances — results less organized
+- Skip QA: verifier only checks code quality, not requirement correctness
+- Skip Verify: no formal review — consider `code-reviewer` manually
 
 ## Re-running Phases
 
-If the user wants to re-run a phase (e.g., "revise the plan"):
-1. The new phase agent will overwrite the previous artifact
-2. Downstream artifacts from later phases should be regenerated
-3. Warn the user: "Re-running Plan will invalidate the QA brief and any implementation. Should I re-run QA and implementation after?"
+If user wants to re-run a phase, the new phase agent overwrites the previous artifact. Warn: "Re-running Plan invalidates QA and any implementation. Re-run QA + implementation after?"
 
 ## Rules
 
-1. **Always gate on human approval** — never auto-proceed between phases unless the user explicitly says "run it all" or "autonomous mode".
-2. **Keep summaries brief** — show 3-5 bullet points after each phase, not the full artifact. The user can read the file.
-3. **Pass the task description and project directory forward** — every agent invocation MUST include both the original task description and the project directory path.
-4. **Create the project directory** — run `mkdir -p .adlc/<slug>` before the first phase.
-5. **Don't do the work yourself** — you are the orchestrator. Invoke the phase agents.
+1. **Always gate on human approval** — never auto-proceed between phases unless the user says "run it all" or "autonomous mode". Exception: the quick path skips gates.
+2. **Spawn in parallel** — when launching multiple agents in one phase, put them in ONE message with multiple Agent tool calls so they actually run concurrently.
+3. **Wait for completion** — when agents run in background, wait for all to finish before spawning synthesizers or moving to the next wave.
+4. **Pass task + project dir + depth + mode** — every agent prompt MUST include all four.
+5. **Use briefs downstream** — once `1-research-brief.md` exists, downstream phases read the brief, not the full artifact (unless explicitly noted).
+6. **Don't do the work yourself** — invoke phase agents.

@@ -28,6 +28,32 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `standard` | Full research protocol as described below. Explore related code, check patterns, discover feature gating, review git history for prior art. ~20-30 tool calls. |
 | `thorough` | Everything in standard, plus: trace full call chains across module boundaries, check all consumers/callers, review recent git history for related changes, search for related TODOs/FIXMEs across the codebase, and document alternative approaches found in the code. ~30-50 tool calls. |
 
+## Scope (Parallel Sub-Research)
+
+Your prompt may include a `Scope` parameter to focus on one slice of research. If `Scope` is set, do ONLY that slice and write to the scoped artifact file. The orchestrator runs multiple scopes in parallel and synthesizes them.
+
+| Scope | Focus | Output File |
+|-------|-------|-------------|
+| `code` | Relevant files, architecture context, data flow, dependencies | `1-research-code.md` |
+| `patterns` | Existing conventions, abstractions, feature gating framework, testing patterns | `1-research-patterns.md` |
+| `history` | Prior art via git log, related TODOs/FIXMEs, commented-out code, recent related changes | `1-research-history.md` |
+| `synthesize` | Read all `1-research-*.md` files and merge into `1-research.md` (full) + `1-research-brief.md` (compact, ~30% of full) | `1-research.md` + `1-research-brief.md` |
+
+If `Scope` is absent, do the full Research Protocol below and write to `1-research.md` + `1-research-brief.md` directly (single-agent mode).
+
+## Tiered Output
+
+Always produce TWO artifacts unless running in a scoped sub-mode:
+1. **`1-research.md`** — full brief, human-readable, for review and reference
+2. **`1-research-brief.md`** — compact brief (~30% of full size), the version downstream agents will actually read
+
+The brief omits prose explanations and keeps only:
+- Relevant Code table (top 5-10 files only)
+- Architecture Context (3-5 bullets max)
+- Feature Gating: library name + 1 example + flag naming pattern
+- Top 3 Risks
+- Open Questions (verbatim)
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to accelerate research by recalling past findings.

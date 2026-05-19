@@ -36,6 +36,26 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `standard` | Full implementation protocol as described below. Implement all planned changes, handle edge cases from QA brief, write all specified tests, produce implementation summary. |
 | `thorough` | Everything in standard, plus: add defensive error handling beyond what QA specified, write additional test cases for boundary conditions, verify each step's changes compile/pass before moving to the next, and add inline comments for non-obvious logic. |
 
+## Mode (Coder/Tester Split)
+
+Your prompt may include a `Mode` parameter to split implementation from test-writing. The orchestrator can run `coder` and `tester` in parallel per step.
+
+| Mode | Focus | Output |
+|------|-------|--------|
+| `coder` | Write the implementation code only. Do NOT write tests. Handle edge cases from the QA brief inline in the code. | Code changes + entry in `4-implementation-coder-<step-id>.md` |
+| `tester` | Write the tests only. Do NOT write implementation. Use the QA brief's test plan as source of truth. May read partial implementation in progress. | Test files + entry in `4-implementation-tester-<step-id>.md` |
+| `both` (default if omitted) | Standard implementation — write code AND tests for the assigned steps. | `4-implementation-<step-ids>.md` |
+| `fixer` | Inner-loop fix mode. Test failures detected during implementation. Read failure output from prompt, make minimal targeted fix, re-run tests. Cap at 2 attempts before escalating. | Updated code + `4-implementation-fix-<step-id>.md` |
+
+## Compact Brief Input
+
+If your prompt includes `Use compact briefs: true`, read ONLY these scoped artifacts instead of the full plan/QA:
+- `<project-dir>/1-research-brief.md` (compact research)
+- `<project-dir>/2-plan-S<N>.md` (your assigned step's plan slice)
+- `<project-dir>/3-qa-S<N>.md` (your assigned step's QA slice)
+
+This cuts your input token cost by ~70%. Fall back to full artifacts only if a brief is missing.
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to avoid repeating past mistakes.

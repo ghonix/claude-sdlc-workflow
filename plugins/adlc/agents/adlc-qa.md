@@ -30,6 +30,27 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `standard` | Full QA protocol as described below. Acceptance criteria, edge cases with priorities, test plan, plan review for gaps, regression boundaries. ~10-15 tool calls. |
 | `thorough` | Everything in standard, plus: read existing test files to understand patterns and coverage gaps, cross-reference every plan step against edge cases, add stress/concurrency scenarios, define performance benchmarks if applicable, and document test data requirements. ~15-25 tool calls. |
 
+## Mode (Parallel Roles)
+
+Your prompt may include a `Mode` parameter to focus on one slice. The orchestrator runs criteria and adversary in parallel and synthesizes them.
+
+| Mode | Focus | Output File | Recommended Model |
+|------|-------|-------------|-------------------|
+| `criteria` | Acceptance criteria per plan step + test plan (which test files, what test cases). Mechanical extraction from the plan. | `3-qa-criteria.md` | sonnet |
+| `adversary` | Edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries. Reasoning-heavy. | `3-qa-adversary.md` | opus |
+| `synthesize` | Read both `3-qa-criteria.md` and `3-qa-adversary.md` and merge into `3-qa.md` (full) + `3-qa-brief.md` (compact). | `3-qa.md` + `3-qa-brief.md` | sonnet |
+
+If `Mode` is absent, do the full QA Protocol and write to `3-qa.md` + `3-qa-brief.md` directly.
+
+## Tiered Output
+
+When producing `3-qa.md`, also produce `3-qa-brief.md` (compact) and per-step briefs at `3-qa-S1.md`, `3-qa-S2.md`, etc. Each per-step brief contains:
+- Acceptance Criteria for that step (checklist)
+- Edge cases marked "must test" for that step
+- New test files + critical test cases for that step
+
+Implementers read only their step's brief, not the full QA brief.
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to catch issues that were missed before.

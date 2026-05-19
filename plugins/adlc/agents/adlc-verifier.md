@@ -34,6 +34,29 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `standard` | Full verification protocol as described below. Acceptance criteria check, code review via sub-agent, test verification, plan compliance, regression check. |
 | `thorough` | Everything in standard, plus: read every changed file line-by-line (not just the diff), verify no unintended side effects on adjacent code, check for security implications, validate performance characteristics if applicable, and run the code review agent with extra scrutiny instructions. |
 
+## Mode (Parallel Evidence Gathering)
+
+Your prompt may include a `Mode` parameter to gather one slice of evidence. The orchestrator runs evidence-gathering modes in parallel and then runs `synthesize` to produce the final verdict.
+
+| Mode | Focus | Output File | Recommended Model |
+|------|-------|-------------|-------------------|
+| `criteria-check` | Read `3-qa.md` acceptance criteria, verify each against the code (read diff + relevant files). Mark PASS/FAIL with evidence. | `5-verify-criteria.md` | sonnet |
+| `test-run` | Run the project's test suite, parse output, report pass/fail counts and which tests are new (from QA test plan) | `5-verify-tests.md` | sonnet |
+| `code-review` | Delegate to `code-reviewer` sub-agent and capture its output verbatim | `5-verify-review.md` | sonnet |
+| `regression-check` | Verify the regression boundaries from QA brief — read the relevant code paths and confirm nothing in those areas changed unexpectedly. | `5-verify-regression.md` | sonnet |
+| `synthesize` | Read all `5-verify-*.md` files. Apply judgment to produce final verdict in `5-verification.md`. This is the ONLY mode that requires opus. | `5-verification.md` | opus |
+
+If `Mode` is absent, do the full Verification Protocol below sequentially and write to `5-verification.md`.
+
+## Skip on Green
+
+In `synthesize` mode, if you see:
+- All acceptance criteria PASS in `5-verify-criteria.md`, AND
+- All tests pass in `5-verify-tests.md`, AND
+- Diff is < 50 lines (check `git diff --shortstat`)
+
+Then SKIP reading `5-verify-review.md` and `5-verify-regression.md` in detail — just append their summaries to the verdict. The orchestrator should not bother spawning code-review for such tiny changes in the first place, but defend against it being present.
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to focus on areas that fail most often.
