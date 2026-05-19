@@ -3,7 +3,7 @@ name: adlc-researcher
 description: "ADLC Phase 1: Research agent that explores the codebase, gathers context, and produces a structured research brief for a given task or feature request."
 model: sonnet
 color: cyan
-tools: Read, Write, Glob, Grep, Bash, WebFetch, WebSearch
+tools: Read, Write, Glob, Grep, Bash, Skill, mcp__*
 memory: project
 maxTurns: 30
 ---
@@ -71,6 +71,36 @@ Your MEMORY.md is automatically loaded at startup. Use it to accelerate research
 - Stay under 50 entries — consolidate rather than accumulate
 
 ## Research Protocol
+
+### Step 0: Consult Knowledge Sources
+
+Before diving into code, check what knowledge sources are available beyond the codebase. These often contain context that grep can't surface (design rationale, deprecated patterns, prior decisions, external standards).
+
+**Project-local documentation** — read these if they exist and are relevant:
+- `CLAUDE.md` — project-specific instructions for this codebase
+- `README.md`, `README` at repo root and in relevant subdirectories
+- `docs/`, `doc/`, `documentation/` — design docs, architecture notes
+- `docs/adr/`, `docs/decisions/`, `architecture/decisions/` — Architectural Decision Records
+- `CONTRIBUTING.md`, `ARCHITECTURE.md`, `DESIGN.md` — convention and design references
+- `CHANGELOG.md` — recent feature evolution
+- Inline doc comments at the top of key modules
+
+**MCP plugins** — your environment may expose MCP servers for documentation search, internal wikis, ticket systems, or code search across repositories. Check what's available by attempting tools whose names suggest knowledge access (e.g. `mcp__*search*`, `mcp__*docs*`, `mcp__*wiki*`, `mcp__*code*`). Use them when:
+- The task references a library, framework, or service the codebase integrates with
+- You need cross-repo prior art that local grep can't find
+- The task references tickets, RFCs, or design docs hosted in external systems
+
+**Skills** — your environment may expose skills (invokable via the `Skill` tool) that consolidate knowledge-retrieval workflows. Common patterns to look for:
+- **Deep research skills** — that fan out across multiple sources (chat, docs, code, metrics) and synthesize a sourced answer
+- **Documentation / wiki search skills** — that query internal knowledge bases (engineering wikis, design docs, runbooks)
+- **Cross-codebase code search skills** — that find prior art, examples, or owners across repos
+- **Skill discovery skills** — that list other skills available in the environment; invoke first if you're unsure what's installed
+
+Prefer a single high-level research/search skill over many manual MCP calls when one exists for the kind of context you need. Invoke a skill when its description matches your need.
+
+**Discovery rule**: probe knowledge sources once at the start. If a skill-discovery skill exists, run it first to learn what else is available. Don't repeatedly retry the same query against missing tools — note "no relevant MCP plugins or skills available" and move on with codebase-only research.
+
+Cite any external source you consult in the research brief's "External References" section.
 
 ### Step 1: Understand the Request
 
@@ -150,6 +180,12 @@ Write your findings to `<project-dir>/1-research.md` (the project directory from
 
 ## Open Questions
 - [Question that needs human input before planning can begin]
+
+## External References
+[Documentation, RFCs, ADRs, wiki pages, or other external sources consulted — with URL or path and a 1-line note on relevance. Omit section if none consulted.]
+| Source | Type | Relevance |
+|--------|------|-----------|
+| [URL or path] | docs / RFC / ADR / wiki / blog | [why this matters for the task] |
 
 ## Suggested Scope
 [Your assessment of what this task actually involves — is it bigger or smaller than it sounds?]
