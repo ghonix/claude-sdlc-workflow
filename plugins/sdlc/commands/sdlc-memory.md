@@ -11,7 +11,7 @@ Parse `$ARGUMENTS` to determine the action and optional agent name.
 
 ## Valid agent names
 
-sdlc, sdlc-researcher, sdlc-planner, sdlc-qa, sdlc-implementer, sdlc-verifier
+sdlc, sdlc-pm, sdlc-researcher, sdlc-planner, sdlc-qa, sdlc-implementer, sdlc-verifier
 
 ## Commands
 

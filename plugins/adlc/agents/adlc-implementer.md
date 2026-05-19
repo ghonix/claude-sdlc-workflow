@@ -26,6 +26,16 @@ Read the relevant artifacts:
 - `<project-dir>/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
 - `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan
 
+## Depth
+
+Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`. If none is specified, default to **standard**.
+
+| Depth | Behavior |
+|-------|----------|
+| `quick` | Implement the core logic and skip edge case handling. Write minimal tests — one happy-path test per step. Skip the implementation summary artifact. |
+| `standard` | Full implementation protocol as described below. Implement all planned changes, handle edge cases from QA brief, write all specified tests, produce implementation summary. |
+| `thorough` | Everything in standard, plus: add defensive error handling beyond what QA specified, write additional test cases for boundary conditions, verify each step's changes compile/pass before moving to the next, and add inline comments for non-obvious logic. |
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to avoid repeating past mistakes.

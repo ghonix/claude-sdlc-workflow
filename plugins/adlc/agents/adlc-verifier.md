@@ -24,6 +24,16 @@ Read all prior artifacts:
 
 Also read the actual code changes via `git diff`.
 
+## Depth
+
+Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`. If none is specified, default to **standard**.
+
+| Depth | Behavior |
+|-------|----------|
+| `quick` | Run tests and check acceptance criteria only. Skip code review agent and regression check. Produce a brief pass/fail verdict with test results. |
+| `standard` | Full verification protocol as described below. Acceptance criteria check, code review via sub-agent, test verification, plan compliance, regression check. |
+| `thorough` | Everything in standard, plus: read every changed file line-by-line (not just the diff), verify no unintended side effects on adjacent code, check for security implications, validate performance characteristics if applicable, and run the code review agent with extra scrutiny instructions. |
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to focus on areas that fail most often.

@@ -18,6 +18,16 @@ You will receive a task description and a **project directory** path (e.g., `.sd
 
 Your job is NOT to solve it. Your job is to **understand the problem space** and produce a research brief.
 
+## Depth
+
+Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`. If none is specified, default to **standard**.
+
+| Depth | Behavior |
+|-------|----------|
+| `quick` | Focus on directly relevant files only. Skip git history, prior art, and feature gating discovery. Produce a minimal brief — Relevant Code + Architecture Context + Risks. Aim for ~10 tool calls. |
+| `standard` | Full research protocol as described below. Explore related code, check patterns, discover feature gating, review git history for prior art. ~20-30 tool calls. |
+| `thorough` | Everything in standard, plus: trace full call chains across module boundaries, check all consumers/callers, review recent git history for related changes, search for related TODOs/FIXMEs across the codebase, and document alternative approaches found in the code. ~30-50 tool calls. |
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to accelerate research by recalling past findings.

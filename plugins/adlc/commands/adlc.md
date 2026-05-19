@@ -10,6 +10,22 @@ Coordinate the full agentic development lifecycle for the given task. You are th
 
 Task: $ARGUMENTS
 
+## Depth
+
+Before starting the pipeline, check if the user's task description includes a depth hint: `quick`, `standard`, or `thorough`. Examples:
+- "Add rate limiting to the API" → no hint → use `standard`
+- "quick: fix the typo in the error message" → `quick`
+- "thorough: redesign the authentication module" → `thorough`
+
+Extract the depth keyword if present (strip it from the task description). If absent, default to **standard**.
+
+Pass the depth to every sub-agent by including this line in each agent prompt:
+```
+Depth: <quick|standard|thorough>
+```
+
+The depth hint scales how much work each agent does — from minimal (quick) to exhaustive (thorough). Each agent defines its own behavior per depth level.
+
 ## Pipeline
 
 ```

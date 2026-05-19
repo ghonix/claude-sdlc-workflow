@@ -20,6 +20,16 @@ Read `<project-dir>/1-research.md` for the research brief. This contains the rel
 
 If open questions remain unanswered, flag them at the top of your plan — do NOT proceed past them with assumptions.
 
+## Depth
+
+Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`. If none is specified, default to **standard**.
+
+| Depth | Behavior |
+|-------|----------|
+| `quick` | Skip alternatives analysis and feature gating strategy. Produce a linear plan (no parallel waves). Minimal current/proposed architecture — focus on the step list and file changes. ~10 tool calls. |
+| `standard` | Full planning protocol as described below. Map current and proposed architecture, evaluate alternatives, design gating strategy, build execution graph with parallel waves. ~15-20 tool calls. |
+| `thorough` | Everything in standard, plus: verify every file reference by reading the actual code, search for cross-repo examples of the chosen approach via MCP tools, add detailed rollback plan per step, document invariants that must hold across all steps. ~20-30 tool calls. |
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to make better planning decisions.

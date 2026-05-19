@@ -7,15 +7,16 @@
 ## Pipeline
 
 ```
-Research → Plan → QA → Implement (parallel waves) → Verify
+[PM Proposal] → Research → Plan → QA → Implement (parallel waves) → Verify
 ```
 
-Each phase produces a structured artifact in `.sdlc/` and gates on human approval before proceeding.
+The PM phase is optional — use it to define **what to build and why** before the SDLC pipeline handles **how to build it**. Each phase produces a structured artifact and gates on human approval before proceeding.
 
-## Agents (7)
+## Agents (8)
 
 | Agent | Phase | Model | Role |
 |-------|-------|-------|------|
+| `sdlc-pm` | 0. Proposal | opus | Product Manager: turns rough ideas into structured project proposals — problem definition, goals, metrics, stakeholders, strategic fit |
 | `sdlc` | Orchestrator | opus | Coordinates the pipeline, dispatches phase agents, manages human gates |
 | `sdlc-researcher` | 1. Research | sonnet | Explores codebase, gathers context, discovers feature gating framework |
 | `sdlc-planner` | 2. Plan | opus | Maps current→proposed architecture, designs gating strategy, builds execution graph with parallel waves |
@@ -26,7 +27,17 @@ Each phase produces a structured artifact in `.sdlc/` and gates on human approva
 
 ## Usage
 
-Invoke the full pipeline:
+Create a project proposal (PM phase, before implementation):
+```
+Use the sdlc-pm agent to [describe your idea or problem]
+```
+
+Or use the slash command:
+```
+/sdlc-pm add dark mode support
+```
+
+Invoke the full implementation pipeline:
 ```
 Use the sdlc agent to [describe your task]
 ```

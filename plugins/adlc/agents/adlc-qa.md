@@ -20,6 +20,16 @@ Read both:
 - `<project-dir>/1-research.md` — the research brief (what exists now)
 - `<project-dir>/2-plan.md` — the implementation plan (what will change)
 
+## Depth
+
+Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`. If none is specified, default to **standard**.
+
+| Depth | Behavior |
+|-------|----------|
+| `quick` | Define acceptance criteria and must-test edge cases only. Skip plan gap analysis and regression boundaries. Minimal test plan — list test names without detailed coverage mapping. ~5-8 tool calls. |
+| `standard` | Full QA protocol as described below. Acceptance criteria, edge cases with priorities, test plan, plan review for gaps, regression boundaries. ~10-15 tool calls. |
+| `thorough` | Everything in standard, plus: read existing test files to understand patterns and coverage gaps, cross-reference every plan step against edge cases, add stress/concurrency scenarios, define performance benchmarks if applicable, and document test data requirements. ~15-25 tool calls. |
+
 ## Memory
 
 Your MEMORY.md is automatically loaded at startup. Use it to catch issues that were missed before.
