@@ -24,7 +24,7 @@ You will receive either:
 Read the relevant artifacts:
 - `<project-dir>/1-research.md` — codebase context and patterns
 - `<project-dir>/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
-- `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan
+- `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan. **If this file does not exist (quick path — QA phase was skipped), rely solely on the plan for implementation guidance.**
 
 ## Depth
 
@@ -43,9 +43,9 @@ Your prompt may include a `Mode` parameter to split implementation from test-wri
 | Mode | Focus | Output |
 |------|-------|--------|
 | `coder` | Write the implementation code only. Do NOT write tests. Handle edge cases from the QA brief inline in the code. | Code changes + entry in `4-implementation-coder-<step-id>.md` |
-| `tester` | Write the tests only. Do NOT write implementation. Use the QA brief's test plan as source of truth. May read partial implementation in progress. | Test files + entry in `4-implementation-tester-<step-id>.md` |
+| `tester` | Write the tests only. Do NOT write implementation. Use `2-plan-S<N>.md` for the interface contract (function signatures, types) and the QA brief's test plan for test cases. Do NOT read in-progress implementation files — they are being written concurrently by the coder. | Test files + entry in `4-implementation-tester-<step-id>.md` |
 | `both` (default if omitted) | Standard implementation — write code AND tests for the assigned steps. | `4-implementation-<step-ids>.md` |
-| `fixer` | Inner-loop fix mode. Test failures detected during implementation. Read failure output from prompt, make minimal targeted fix, re-run tests. Cap at 2 attempts before escalating. | Updated code + `4-implementation-fix-<step-id>.md` |
+| `fixer` | Inner-loop fix mode. Test failures detected during implementation. Read failure output from prompt, make minimal targeted fix, re-run tests. Cap at 2 attempts before escalating. Overwrite the original `4-implementation-<step-id>.md` — do not create a new file. | Updated code + overwrites `4-implementation-<step-id>.md` |
 
 ## Compact Brief Input
 

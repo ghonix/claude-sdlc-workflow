@@ -16,13 +16,18 @@ You are the **Verify** phase of an agentic development lifecycle workflow. You v
 
 You will receive a task description and a **project directory** path (e.g., `.adlc/add-rate-limiting`). All artifact files are in this directory.
 
-Read all prior artifacts:
-- `<project-dir>/1-research.md` — original research and context
-- `<project-dir>/2-plan.md` — what was supposed to be built
+**Mode-conditional input**:
+
+- **Evidence modes** (`criteria-check`, `test-run`, `code-review`, `regression-check`): read only the artifacts relevant to your check plus `git diff`. For `criteria-check` and `regression-check`, read `3-qa.md`. For `code-review`, read `4-implementation.md`. For `test-run`, no prior artifacts needed — just run the suite.
+- **`synthesize` mode**: read ONLY the `5-verify-*.md` evidence files. Do NOT re-read prior phase artifacts — the evidence files already summarize all relevant findings.
+
+For evidence modes, the relevant prior artifacts are:
 - `<project-dir>/3-qa.md` — acceptance criteria and test plan
 - `<project-dir>/4-implementation.md` — what was actually built
+- `git diff` — actual code changes
 
-Also read the actual code changes via `git diff`.
+For `synthesize` mode, read ONLY:
+- All `<project-dir>/5-verify-*.md` files
 
 ## Depth
 
@@ -44,7 +49,7 @@ Your prompt may include a `Mode` parameter to gather one slice of evidence. The 
 | `test-run` | Run the project's test suite, parse output, report pass/fail counts and which tests are new (from QA test plan) | `5-verify-tests.md` | sonnet |
 | `code-review` | Delegate to `code-reviewer` sub-agent and capture its output verbatim | `5-verify-review.md` | sonnet |
 | `regression-check` | Verify the regression boundaries from QA brief — read the relevant code paths and confirm nothing in those areas changed unexpectedly. | `5-verify-regression.md` | sonnet |
-| `synthesize` | Read all `5-verify-*.md` files. Apply judgment to produce final verdict in `5-verification.md`. This is the ONLY mode that requires opus. | `5-verification.md` | opus |
+| `synthesize` | Read all `5-verify-*.md` files. Apply judgment to produce final verdict in `5-verification.md`. This is the ONLY mode that uses opus — the orchestrator passes `model="sonnet"` when spawning all evidence modes. | `5-verification.md` | opus |
 
 If `Mode` is absent, do the full Verification Protocol below sequentially and write to `5-verification.md`.
 

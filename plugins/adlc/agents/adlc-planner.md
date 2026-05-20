@@ -16,7 +16,7 @@ You are the **Plan** phase of an agentic development lifecycle workflow. You rec
 
 You will receive a task description and a **project directory** path (e.g., `.adlc/add-rate-limiting`). All artifact files are in this directory.
 
-Read `<project-dir>/1-research.md` for the research brief. This contains the relevant code, architecture context, risks, and open questions gathered by the researcher.
+Read `<project-dir>/1-research-brief.md` (compact brief). Fall back to `1-research.md` only if the brief is missing. The brief contains the key findings the researcher surfaced — it is the authoritative input for planning.
 
 If open questions remain unanswered, flag them at the top of your plan — do NOT proceed past them with assumptions.
 
@@ -42,9 +42,9 @@ Your prompt may include a `Mode` parameter to do only part of the planning work.
 
 If `Mode` is absent, do the full Planning Protocol below and write to `2-plan.md` + `2-plan-brief.md` directly.
 
-**Recommended model per mode**:
-- `architect` and `critique` → opus (reasoning-heavy)
-- `breakdown` → sonnet (mechanical)
+**Model per mode** (enforced via orchestrator `model` parameter at spawn time):
+- `architect` and `critique` → opus (reasoning-heavy; orchestrator uses default opus frontmatter)
+- `breakdown` → sonnet (mechanical; orchestrator passes `model="sonnet"` when spawning)
 
 ## Tiered Output
 
@@ -76,7 +76,7 @@ Your MEMORY.md is automatically loaded at startup. Use it to make better plannin
 
 ### Step 1: Read the Research Brief
 
-Read `<project-dir>/1-research.md` thoroughly. Also read the key files it references to verify the researcher's findings and build your own understanding.
+Read `<project-dir>/1-research-brief.md` (compact brief). Fall back to `1-research.md` if the brief is missing. Also read the key files it references to verify the researcher's findings and build your own understanding.
 
 #### Knowledge Sources
 

@@ -1,6 +1,6 @@
 # SDLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v1.1.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v1.2.0-blue?style=flat)
 
 A structured, agent-driven Software Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each with a specialized agent, a concrete artifact, and a human gate.
 
@@ -381,6 +381,20 @@ Use the sdlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v1.2.0
+
+ADLC orchestration correctness and token efficiency.
+
+- **Model enforcement**: planner breakdown, QA adversary, and all verifier evidence modes now receive explicit `model` overrides at spawn time — "Recommended Model" annotations are enforced, not advisory
+- **Verifier synthesizer scoped reads**: synthesize mode now reads only `5-verify-*.md` evidence files, not all prior phase artifacts (removes 80-150K redundant tokens per run)
+- **Agent protocol/brief alignment**: planner and QA agent protocols now read compact briefs (`1-research-brief.md`, `2-plan-brief.md`) matching what the orchestrator sends
+- **Tester race condition fix**: tester mode in coder/tester split now uses `2-plan-S<N>.md` as interface contract instead of reading in-progress coder output
+- **Fixer file conflict fix**: fixer mode overwrites the original `4-implementation-S<N>.md` instead of creating a separate `4-implementation-fix-S<N>.md`
+- **Phase re-run cleanup**: orchestrator now deletes downstream artifacts before re-running a phase (prevents stale artifact reads)
+- **Code-review condition**: changed from unreliable `git diff --shortstat` threshold to depth-based (skip for `quick`, always spawn for `standard`/`thorough`)
+- **Quick path QA fallback**: implementer explicitly handles missing `3-qa.md` when QA phase was skipped
+- **adlc-memory path fix**: commands now correctly resolve `adlc-<agent>` to `.claude/agent-memory/adlc-adlc-<agent>/MEMORY.md`
 
 ### v1.1.0
 

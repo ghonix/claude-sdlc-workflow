@@ -17,8 +17,8 @@ You are the **QA** phase of an agentic development lifecycle workflow. You run B
 You will receive a task description and a **project directory** path (e.g., `.adlc/add-rate-limiting`). All artifact files are in this directory.
 
 Read both:
-- `<project-dir>/1-research.md` — the research brief (what exists now)
-- `<project-dir>/2-plan.md` — the implementation plan (what will change)
+- `<project-dir>/1-research-brief.md` — compact research (what exists now). Fall back to `1-research.md` if the brief is missing.
+- `<project-dir>/2-plan-brief.md` — compact plan (what will change). Fall back to `2-plan.md` if the brief is missing.
 
 ## Depth
 
@@ -37,7 +37,7 @@ Your prompt may include a `Mode` parameter to focus on one slice. The orchestrat
 | Mode | Focus | Output File | Recommended Model |
 |------|-------|-------------|-------------------|
 | `criteria` | Acceptance criteria per plan step + test plan (which test files, what test cases). Mechanical extraction from the plan. | `3-qa-criteria.md` | sonnet |
-| `adversary` | Edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries. Reasoning-heavy. | `3-qa-adversary.md` | opus |
+| `adversary` | Edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries. Reasoning-heavy. | `3-qa-adversary.md` | opus (orchestrator passes `model="opus"` at spawn time) |
 | `synthesize` | Read both `3-qa-criteria.md` and `3-qa-adversary.md` and merge into `3-qa.md` (full) + `3-qa-brief.md` (compact). | `3-qa.md` + `3-qa-brief.md` | sonnet |
 
 If `Mode` is absent, do the full QA Protocol and write to `3-qa.md` + `3-qa-brief.md` directly.

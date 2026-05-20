@@ -64,7 +64,7 @@ If quick path applies, run a **collapsed pipeline**:
 1. Spawn researcher with `Scope: code` only (skip patterns, history, synthesis)
 2. Skip Plan phase entirely — write a 1-step minimal plan template
 3. Skip QA phase entirely — implementer reads research + makes change directly
-4. Spawn implementer with `Mode: both, Depth: quick`
+4. Spawn implementer with `Mode: both, Depth: quick`. Add to the prompt: "No QA phase was run — implement based on the plan only. If `3-qa.md` is absent, skip QA artifact reading."
 5. Spawn verifier with `Mode: criteria-check, test-run` only (parallel) + `synthesize`
 
 Skip ALL human gates in the quick path unless verification fails. Surface only the final verdict.
@@ -140,7 +140,7 @@ Produces `2-architecture-critique.md`. The breakdown agent should read it.
 ### Step 2c: Breakdown (sonnet)
 
 ```
-Agent(subagent_type="adlc-planner", description="Plan breakdown",
+Agent(subagent_type="adlc-planner", model="sonnet", description="Plan breakdown",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: breakdown\nDepth: <depth>\n\nRead 2-architecture.md (and 2-architecture-critique.md if present). Task: <task>")
 ```
 
@@ -158,7 +158,7 @@ Agent(subagent_type="adlc-qa", description="QA criteria",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 
-Agent(subagent_type="adlc-qa", description="QA adversary",
+Agent(subagent_type="adlc-qa", model="opus", description="QA adversary",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 ```
@@ -190,7 +190,7 @@ Agent(subagent_type="adlc-implementer", description="Implement S1",
   run_in_background=true)
 ```
 
-**Split mode** (faster for non-trivial steps): spawn coder + tester for the same step in parallel.
+**Split mode** (faster for non-trivial steps): spawn coder + tester for the same step in parallel. Because they run simultaneously, the tester MUST use only `2-plan-S<N>.md` for the interface contract — do NOT instruct it to read in-progress implementation files.
 ```
 Agent(subagent_type="adlc-implementer", description="Code S1",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: coder\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1 code only. Task: <task>",
@@ -214,7 +214,7 @@ Execute waves sequentially. Within each wave, launch all step agents (combined o
 If a wave finishes with test failures, spawn:
 ```
 Agent(subagent_type="adlc-implementer", description="Fix S<N>",
-  prompt="Project directory: <workspace_dir>/<slug>\nMode: fixer\nDepth: <depth>\n\nTest failures for step S<N>:\n<failure output>\n\nMake minimal targeted fix.")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: fixer\nDepth: <depth>\n\nTest failures for step S<N>:\n<failure output>\n\nMake minimal targeted fix. Overwrite the existing `4-implementation-S<N>.md` summary — do not create a new file.")
 ```
 
 Cap at 2 fix attempts per step. If still failing, escalate by surfacing the failure in the gate message — do NOT proceed to verify.
@@ -227,22 +227,22 @@ After all waves complete, read all `4-implementation-*.md` files and present (fi
 
 Spawn 3-4 evidence-gathering verifiers in parallel:
 ```
-Agent(subagent_type="adlc-verifier", description="Verify: criteria",
+Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: criteria",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: criteria-check\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
-Agent(subagent_type="adlc-verifier", description="Verify: tests",
+Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: tests",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: test-run\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
-Agent(subagent_type="adlc-verifier", description="Verify: regression",
+Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: regression",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: regression-check\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 ```
 
-**Conditionally spawn code-review**: Check `git diff --shortstat` first. If diff > 50 lines OR depth is `thorough`, ALSO spawn:
+**Conditionally spawn code-review**: Skip only if `Depth: quick`. Otherwise always spawn (git diff --shortstat is unreliable as a threshold since it measures all uncommitted repo changes, not just this ADLC run):
 ```
-Agent(subagent_type="adlc-verifier", description="Verify: code review",
+Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: code review",
   prompt="Project directory: <workspace_dir>/<slug>\nMode: code-review\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 ```
@@ -282,7 +282,17 @@ If the user asks to skip a phase, allow it but warn:
 
 ## Re-running Phases
 
-If user wants to re-run a phase, the new phase agent overwrites the previous artifact. Warn: "Re-running Plan invalidates QA and any implementation. Re-run QA + implementation after?"
+If user wants to re-run a phase, clean up downstream artifacts first, then spawn the phase agent. Stale artifacts from the prior run will otherwise be read by subsequent phases.
+
+| Phase to re-run | Artifacts to delete before re-running |
+|-----------------|---------------------------------------|
+| Research | `1-research*.md` |
+| Plan | `2-*.md`, `3-*.md`, `4-*.md`, `5-*.md` |
+| QA | `3-*.md`, `4-*.md`, `5-*.md` |
+| Implement | `4-*.md`, `5-*.md` |
+| Verify | `5-*.md` |
+
+Run `rm -f <workspace_dir>/<slug>/<pattern>` for each matching glob before re-spawning. Tell the user which artifacts are being deleted.
 
 ## Rules
 
