@@ -10,6 +10,35 @@ Coordinate the full agentic development lifecycle. You are the conductor — spa
 
 Task: $ARGUMENTS
 
+## Workspace Configuration
+
+**Before anything else**, resolve the workspace directory where all ADLC project artifacts will be stored.
+
+Run:
+```bash
+cat ~/.config/adlc/config 2>/dev/null
+```
+
+- If the file exists and contains `workspace_dir`, parse and use that value as `<workspace_dir>`.
+- If the file does not exist (first run ever), use `AskUserQuestion` to ask:
+
+  > "Where should ADLC store project artifacts? This directory will hold all your ADLC workspaces (one sub-folder per task). The choice is remembered permanently across all Claude sessions and instances."
+
+  Offer these options:
+  - `~/.adlc` — hidden folder in home directory (good default for personal machines)
+  - `.adlc` in the current project — project-local, checked into `.gitignore`
+  - Custom path — let the user type their own
+
+  After the user answers, expand `~` to the real absolute path (run `echo ~` to get it), then write the config:
+  ```bash
+  mkdir -p ~/.config/adlc
+  printf '{"workspace_dir": "%s"}\n' "<chosen_absolute_path>" > ~/.config/adlc/config
+  ```
+
+  Confirm to the user: "ADLC workspace set to `<workspace_dir>`. This is saved in `~/.config/adlc/config` and will be used for all future runs."
+
+Call the resolved absolute path `<workspace_dir>` for the rest of this run.
+
 ## Depth
 
 Check if the user's task description includes a depth hint: `quick`, `standard`, or `thorough`. Extract and strip it. If absent, default to **standard**.
@@ -23,7 +52,7 @@ Pass `Depth: <level>` to every sub-agent prompt.
 
 ## Project Directory
 
-Derive a kebab-case slug from the task (e.g., "Add rate limiting" → `add-rate-limiting`). Create `mkdir -p .adlc/<slug>`. All artifacts go in this directory.
+Derive a kebab-case slug from the task (e.g., "Add rate limiting" → `add-rate-limiting`). The project directory is `<workspace_dir>/<slug>`. Create it: `mkdir -p <workspace_dir>/<slug>`. All artifacts go here.
 
 ## Triviality Gate (Quick Path)
 
@@ -62,29 +91,29 @@ Spawn 3 researchers in parallel using a single message with multiple Agent calls
 
 ```
 Agent(subagent_type="adlc-researcher", description="Research: code scope",
-  prompt="Project directory: .adlc/<slug>\nScope: code\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nScope: code\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-researcher", description="Research: patterns scope",
-  prompt="Project directory: .adlc/<slug>\nScope: patterns\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nScope: patterns\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-researcher", description="Research: history scope",
-  prompt="Project directory: .adlc/<slug>\nScope: history\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nScope: history\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 ```
 
 When all three complete, spawn a synthesizer:
 ```
 Agent(subagent_type="adlc-researcher", description="Synthesize research",
-  prompt="Project directory: .adlc/<slug>\nScope: synthesize\nDepth: <depth>\n\nTask: <task>")
+  prompt="Project directory: <workspace_dir>/<slug>\nScope: synthesize\nDepth: <depth>\n\nTask: <task>")
 ```
 
 The synthesizer produces `1-research.md` (full) + `1-research-brief.md` (compact).
 
 Present a brief summary to the user (key files, top risks, open questions).
 
-**Gate**: "Research is complete. Review `.adlc/<slug>/1-research.md`. Proceed to planning?"
+**Gate**: "Research is complete. Review `<workspace_dir>/<slug>/1-research.md`. Proceed to planning?"
 
 ## Phase 2: Plan (Architect → Breakdown)
 
@@ -92,7 +121,7 @@ Present a brief summary to the user (key files, top risks, open questions).
 
 ```
 Agent(subagent_type="adlc-planner", description="Architect approach",
-  prompt="Project directory: .adlc/<slug>\nMode: architect\nDepth: <depth>\n\nRead 1-research-brief.md. Task: <task>")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: architect\nDepth: <depth>\n\nRead 1-research-brief.md. Task: <task>")
 ```
 
 Produces `2-architecture.md`.
@@ -102,7 +131,7 @@ Produces `2-architecture.md`.
 If `Depth: thorough`, spawn critic in parallel with breakdown:
 ```
 Agent(subagent_type="adlc-planner", description="Critique architecture",
-  prompt="Project directory: .adlc/<slug>\nMode: critique\nDepth: <depth>\n\nRead 2-architecture.md. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: critique\nDepth: <depth>\n\nRead 2-architecture.md. Task: <task>",
   run_in_background=true)
 ```
 
@@ -112,39 +141,39 @@ Produces `2-architecture-critique.md`. The breakdown agent should read it.
 
 ```
 Agent(subagent_type="adlc-planner", description="Plan breakdown",
-  prompt="Project directory: .adlc/<slug>\nMode: breakdown\nDepth: <depth>\n\nRead 2-architecture.md (and 2-architecture-critique.md if present). Task: <task>")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: breakdown\nDepth: <depth>\n\nRead 2-architecture.md (and 2-architecture-critique.md if present). Task: <task>")
 ```
 
 Produces `2-plan.md` + `2-plan-brief.md` + per-step `2-plan-S<N>.md` files.
 
 Present summary (architecture summary, step count, wave count, key risks).
 
-**Gate**: "Plan is ready. Review `.adlc/<slug>/2-plan.md`. Proceed to QA?"
+**Gate**: "Plan is ready. Review `<workspace_dir>/<slug>/2-plan.md`. Proceed to QA?"
 
 ## Phase 3: QA (Parallel Criteria + Adversary → Synthesize)
 
 Spawn criteria + adversary in parallel:
 ```
 Agent(subagent_type="adlc-qa", description="QA criteria",
-  prompt="Project directory: .adlc/<slug>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-qa", description="QA adversary",
-  prompt="Project directory: .adlc/<slug>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 ```
 
 When both complete:
 ```
 Agent(subagent_type="adlc-qa", description="QA synthesize",
-  prompt="Project directory: .adlc/<slug>\nMode: synthesize\nDepth: <depth>\n\nMerge 3-qa-criteria.md and 3-qa-adversary.md.")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: synthesize\nDepth: <depth>\n\nMerge 3-qa-criteria.md and 3-qa-adversary.md.")
 ```
 
 Produces `3-qa.md` + `3-qa-brief.md` + per-step `3-qa-S<N>.md` files.
 
 Present summary (criteria count, top edge cases, plan gaps).
 
-**Gate**: "QA brief is ready. Review `.adlc/<slug>/3-qa.md`. Proceed to implementation?"
+**Gate**: "QA brief is ready. Review `<workspace_dir>/<slug>/3-qa.md`. Proceed to implementation?"
 
 ## Phase 4: Implement (Parallel Waves + Coder/Tester Split)
 
@@ -157,18 +186,18 @@ For each step in the current wave, choose between:
 **Combined mode** (default, simpler): one implementer per step with `Mode: both`.
 ```
 Agent(subagent_type="adlc-implementer", description="Implement S1",
-  prompt="Project directory: .adlc/<slug>\nMode: both\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: both\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1. Task: <task>",
   run_in_background=true)
 ```
 
 **Split mode** (faster for non-trivial steps): spawn coder + tester for the same step in parallel.
 ```
 Agent(subagent_type="adlc-implementer", description="Code S1",
-  prompt="Project directory: .adlc/<slug>\nMode: coder\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1 code only. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: coder\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1 code only. Task: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-implementer", description="Test S1",
-  prompt="Project directory: .adlc/<slug>\nMode: tester\nDepth: <depth>\nUse compact briefs: true\n\nWrite tests for step S1 only. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: tester\nDepth: <depth>\nUse compact briefs: true\n\nWrite tests for step S1 only. Task: <task>",
   run_in_background=true)
 ```
 
@@ -185,7 +214,7 @@ Execute waves sequentially. Within each wave, launch all step agents (combined o
 If a wave finishes with test failures, spawn:
 ```
 Agent(subagent_type="adlc-implementer", description="Fix S<N>",
-  prompt="Project directory: .adlc/<slug>\nMode: fixer\nDepth: <depth>\n\nTest failures for step S<N>:\n<failure output>\n\nMake minimal targeted fix.")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: fixer\nDepth: <depth>\n\nTest failures for step S<N>:\n<failure output>\n\nMake minimal targeted fix.")
 ```
 
 Cap at 2 fix attempts per step. If still failing, escalate by surfacing the failure in the gate message — do NOT proceed to verify.
@@ -199,29 +228,29 @@ After all waves complete, read all `4-implementation-*.md` files and present (fi
 Spawn 3-4 evidence-gathering verifiers in parallel:
 ```
 Agent(subagent_type="adlc-verifier", description="Verify: criteria",
-  prompt="Project directory: .adlc/<slug>\nMode: criteria-check\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: criteria-check\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-verifier", description="Verify: tests",
-  prompt="Project directory: .adlc/<slug>\nMode: test-run\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: test-run\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-verifier", description="Verify: regression",
-  prompt="Project directory: .adlc/<slug>\nMode: regression-check\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: regression-check\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 ```
 
 **Conditionally spawn code-review**: Check `git diff --shortstat` first. If diff > 50 lines OR depth is `thorough`, ALSO spawn:
 ```
 Agent(subagent_type="adlc-verifier", description="Verify: code review",
-  prompt="Project directory: .adlc/<slug>\nMode: code-review\nDepth: <depth>\n\nTask: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: code-review\nDepth: <depth>\n\nTask: <task>",
   run_in_background=true)
 ```
 
 When all evidence agents complete, spawn synthesizer (opus):
 ```
 Agent(subagent_type="adlc-verifier", description="Verify: synthesize",
-  prompt="Project directory: .adlc/<slug>\nMode: synthesize\nDepth: <depth>\n\nRead all 5-verify-*.md files. Task: <task>")
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: synthesize\nDepth: <depth>\n\nRead all 5-verify-*.md files. Task: <task>")
 ```
 
 Produces `5-verification.md`.
