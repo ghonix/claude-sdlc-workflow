@@ -186,18 +186,18 @@ For each step in the current wave, choose between:
 **Combined mode** (default, simpler): one implementer per step with `Mode: both`.
 ```
 Agent(subagent_type="adlc-implementer", description="Implement S1",
-  prompt="Project directory: <workspace_dir>/<slug>\nMode: both\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: both\nDepth: <depth>\n\nImplement step S1. Task: <task>",
   run_in_background=true)
 ```
 
 **Split mode** (faster for non-trivial steps): spawn coder + tester for the same step in parallel. Because they run simultaneously, the tester MUST use only `2-plan-S<N>.md` for the interface contract — do NOT instruct it to read in-progress implementation files.
 ```
 Agent(subagent_type="adlc-implementer", description="Code S1",
-  prompt="Project directory: <workspace_dir>/<slug>\nMode: coder\nDepth: <depth>\nUse compact briefs: true\n\nImplement step S1 code only. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: coder\nDepth: <depth>\n\nImplement step S1 code only. Task: <task>",
   run_in_background=true)
 
 Agent(subagent_type="adlc-implementer", description="Test S1",
-  prompt="Project directory: <workspace_dir>/<slug>\nMode: tester\nDepth: <depth>\nUse compact briefs: true\n\nWrite tests for step S1 only. Task: <task>",
+  prompt="Project directory: <workspace_dir>/<slug>\nMode: tester\nDepth: <depth>\n\nWrite tests for step S1 only. Task: <task>",
   run_in_background=true)
 ```
 

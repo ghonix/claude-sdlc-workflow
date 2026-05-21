@@ -18,13 +18,24 @@ You are the **Implement** phase of an agentic development lifecycle workflow. Yo
 You will receive a task description and a **project directory** path (e.g., `.adlc/add-rate-limiting`). All artifact files are in this directory.
 
 You will receive either:
-- **Full plan** — implement all steps (default, single-implementer mode)
 - **Specific steps** — implement only the steps listed in your prompt (parallel mode, e.g., "Implement steps S1 and S2")
+- **Full plan** — implement all steps (single-implementer mode, no step IDs in prompt)
 
-Read the relevant artifacts:
-- `<project-dir>/1-research.md` — codebase context and patterns
-- `<project-dir>/2-plan.md` — what to build (read the full plan for context, but only implement your assigned steps)
-- `<project-dir>/3-qa.md` — acceptance criteria, edge cases, and test plan. **If this file does not exist (quick path — QA phase was skipped), rely solely on the plan for implementation guidance.**
+Always read the minimum context needed:
+
+**Parallel mode (specific steps assigned)**:
+- `<project-dir>/1-research-brief.md` — compact codebase context
+- `<project-dir>/2-plan-S<N>.md` — your assigned step's plan slice (one file per assigned step)
+- `<project-dir>/3-qa-S<N>.md` — your assigned step's acceptance criteria and test cases (one file per assigned step)
+
+**Single-implementer mode (all steps)**:
+- `<project-dir>/1-research-brief.md` — compact codebase context
+- `<project-dir>/2-plan-brief.md` — compact plan covering all steps
+- `<project-dir>/3-qa-brief.md` — compact QA covering all acceptance criteria
+
+**Fallback**: if a brief or per-step file is missing, fall back to the corresponding full artifact (`1-research.md`, `2-plan.md`, `3-qa.md`).
+
+**If `3-qa.md` does not exist** (quick path — QA phase was skipped): rely solely on the plan for implementation guidance.
 
 ## Depth
 
@@ -46,15 +57,6 @@ Your prompt may include a `Mode` parameter to split implementation from test-wri
 | `tester` | Write the tests only. Do NOT write implementation. Use `2-plan-S<N>.md` for the interface contract (function signatures, types) and the QA brief's test plan for test cases. Do NOT read in-progress implementation files — they are being written concurrently by the coder. | Test files + entry in `4-implementation-tester-<step-id>.md` |
 | `both` (default if omitted) | Standard implementation — write code AND tests for the assigned steps. | `4-implementation-<step-ids>.md` |
 | `fixer` | Inner-loop fix mode. Test failures detected during implementation. Read failure output from prompt, make minimal targeted fix, re-run tests. Cap at 2 attempts before escalating. Overwrite the original `4-implementation-<step-id>.md` — do not create a new file. | Updated code + overwrites `4-implementation-<step-id>.md` |
-
-## Compact Brief Input
-
-If your prompt includes `Use compact briefs: true`, read ONLY these scoped artifacts instead of the full plan/QA:
-- `<project-dir>/1-research-brief.md` (compact research)
-- `<project-dir>/2-plan-S<N>.md` (your assigned step's plan slice)
-- `<project-dir>/3-qa-S<N>.md` (your assigned step's QA slice)
-
-This cuts your input token cost by ~70%. Fall back to full artifacts only if a brief is missing.
 
 ## Memory
 
