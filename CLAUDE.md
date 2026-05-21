@@ -48,6 +48,60 @@ Use the sdlc-researcher agent to investigate [topic]
 Use the sdlc-planner agent to plan [feature]
 ```
 
+---
+
+## ADLC Plugin
+
+The ADLC plugin is a parallel-first variant of SDLC. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
+
+### Pipeline
+
+```
+[PM Proposal] → Research (3 parallel scopes + synthesize)
+  → Plan (architect → breakdown, +critique if thorough)
+  → QA (criteria || adversary → synthesize)
+  → Implement (parallel waves, coder || tester per step)
+  → Verify (4 parallel evidence agents → synthesize)
+```
+
+### Agents (7)
+
+| Agent | Phase | Model | Role |
+|-------|-------|-------|------|
+| `adlc-pm` | 0. Proposal | opus | Product Manager: gathers requirements, asks clarifying questions, produces a structured proposal before any code is touched |
+| `adlc` | Orchestrator | sonnet | Coordinates parallel sub-agents, manages wave execution and human gates |
+| `adlc-researcher` | 1. Research | sonnet | Runs as 3 parallel scopes (code, patterns, history) + synthesizer |
+| `adlc-planner` | 2. Plan | opus/sonnet | Architect (opus) designs approach; breakdown (sonnet) produces step graph |
+| `adlc-qa` | 3. QA | sonnet/opus | Criteria (sonnet) + adversary (opus) run in parallel; synthesizer merges |
+| `adlc-implementer` | 4. Implement | sonnet | Parallel per-wave, reads only scoped briefs for assigned steps |
+| `adlc-verifier` | 5. Verify | sonnet/opus | Evidence modes (sonnet) gather in parallel; synthesizer (opus) produces verdict |
+
+### Usage
+
+Start with requirements (recommended for new features):
+```
+/adlc-pm add rate limiting to the API
+```
+
+Then run the full pipeline using the task description from the proposal:
+```
+/adlc Add per-user rate limiting to the REST API: 100 req/min default, configurable per tenant
+```
+
+Or invoke individual phases:
+```
+Use the adlc-researcher agent to investigate [topic]
+Use the adlc-planner agent to plan [feature]
+```
+
+Manage agent memories:
+```
+/adlc-memory              # view all agent memories
+/adlc-memory view adlc-researcher
+/adlc-memory edit adlc-planner
+/adlc-memory clear
+```
+
 ## Artifacts
 
 Each phase writes to `.sdlc/` in the project root:

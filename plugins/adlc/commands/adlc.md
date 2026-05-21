@@ -74,7 +74,7 @@ Otherwise, proceed to the **standard pipeline** below.
 ## Standard Pipeline
 
 ```
-Research (3 parallel scopes + synthesize)
+[PM Proposal] → Research (3 parallel scopes + synthesize)
   → [Gate]
   → Plan (architect → breakdown, +critique if thorough)
   → [Gate]
