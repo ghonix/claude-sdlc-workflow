@@ -1,6 +1,6 @@
 # SDLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v1.2.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v1.3.0-blue?style=flat)
 
 A structured, agent-driven Software Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each with a specialized agent, a concrete artifact, and a human gate.
 
@@ -381,6 +381,15 @@ Use the sdlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v1.3.0
+
+ADLC PM agent and implementer context scoping.
+
+- **adlc-pm agent**: new PM phase for ADLC — asks clarifying questions before any research starts, produces a structured proposal (problem statement, goals, non-goals, user stories, success metrics, scope, risks, sizing) to `proposals/<slug>/proposal.md`
+- **`/adlc-pm` command**: slash command to invoke the PM agent directly
+- **Implementer minimal context**: implementers now read scoped briefs by default — parallel mode reads per-step slices (`2-plan-S<N>.md`, `3-qa-S<N>.md`), single mode reads compact briefs; full artifacts kept as fallback only
+- **Removed `Use compact briefs` flag**: scoped reads are now the default behavior, not an opt-in
 
 ### v1.2.0
 
