@@ -57,20 +57,21 @@ The ADLC plugin is a parallel-first variant of SDLC. Each phase decomposes into 
 ### Pipeline
 
 ```
-[PM Proposal] → Research (3 parallel scopes + synthesize)
+[PM Proposal] → Research (3 parallel scopes, each dispatching scouts → synthesize)
   → Plan (architect → breakdown, +critique if thorough)
   → QA (criteria || adversary → synthesize)
   → Implement (parallel waves, coder || tester per step)
   → Verify (4 parallel evidence agents → synthesize)
 ```
 
-### Agents (7)
+### Agents (8)
 
 | Agent | Phase | Model | Role |
 |-------|-------|-------|------|
 | `adlc-pm` | 0. Proposal | opus | Product Manager: gathers requirements, asks clarifying questions, produces a structured proposal before any code is touched |
 | `adlc` | Orchestrator | sonnet | Coordinates parallel sub-agents, manages wave execution and human gates |
-| `adlc-researcher` | 1. Research | sonnet | Runs as 3 parallel scopes (code, patterns, history) + synthesizer |
+| `adlc-researcher` | 1. Research | sonnet | Director: dispatches scouts, analyzes evidence, writes research brief |
+| `adlc-scout` | 1. Research | haiku | Lightweight search agent: finds files, greps patterns, writes structured evidence to disk |
 | `adlc-planner` | 2. Plan | opus/sonnet | Architect (opus) designs approach; breakdown (sonnet) produces step graph |
 | `adlc-qa` | 3. QA | sonnet/opus | Criteria (sonnet) + adversary (opus) run in parallel; synthesizer merges |
 | `adlc-implementer` | 4. Implement | sonnet | Parallel per-wave, reads only scoped briefs for assigned steps |

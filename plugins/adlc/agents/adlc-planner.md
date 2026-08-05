@@ -39,12 +39,118 @@ Your prompt may include a `Mode` parameter to do only part of the planning work.
 | `architect` | Current architecture, proposed architecture, alternatives analysis, gating strategy, design approach. NO step breakdown, NO execution graph. | `2-architecture.md` |
 | `breakdown` | Read `2-architecture.md` and produce step breakdown, file lists, dependencies, execution graph with parallel waves. NO architecture re-analysis. | `2-plan.md` + `2-plan-brief.md` |
 | `critique` | Read `2-architecture.md` and act as devil's advocate — list problems with the chosen approach, surface missed alternatives, challenge assumptions. Output critique to `2-architecture-critique.md`. Used in `thorough` depth only. | `2-architecture-critique.md` |
+| `decompose` | Read project-level research and propose a set of independent **streams** (sub-projects) with a dependency graph between them, instead of a step breakdown. Used for hierarchical projects — see "Decompose Mode" below. | `<project-dir>/project.yaml` |
 
 If `Mode` is absent, do the full Planning Protocol below and write to `2-plan.md` + `2-plan-brief.md` directly.
 
 **Model per mode** (enforced via orchestrator `model` parameter at spawn time):
 - `architect` and `critique` → opus (reasoning-heavy; orchestrator uses default opus frontmatter)
 - `breakdown` → sonnet (mechanical; orchestrator passes `model="sonnet"` when spawning)
+- `decompose` → opus (reasoning-heavy; identifying stream boundaries is an architectural judgment call, not mechanical)
+
+## Decompose Mode
+
+`decompose` is a distinct planning mode for **hierarchical projects** — tasks large enough to split into multiple independent work streams, each of which will run its own full ADLC pipeline (research → plan → QA → implement → verify) in its own subdirectory. It replaces step breakdown with **stream** breakdown: instead of proposing S1, S2, S3 steps within one plan, you propose stream-a, stream-b, stream-c subdirectories, each of which gets decomposed further (via `breakdown` mode) once its own turn comes up.
+
+### Input
+
+Read `<project-dir>/1-research-brief.md` (compact brief). Fall back to `<project-dir>/1-research.md` only if the brief is missing. Also read the task description passed in the prompt.
+
+### Output
+
+Write `<project-dir>/project.yaml` with this exact schema:
+
+```yaml
+name: "Project display name"
+description: "One-line summary"
+created: "2026-08-03"
+gate_strategy: "per-stream"  # per-stream | per-level | root-only
+streams:
+  - name: stream-a
+    slug: stream-a
+    description: "What this stream does"
+    status: pending   # pending|research|plan|qa|implement|verify|completed|blocked
+    depends_on: []
+    branch: ""        # v2 placeholder
+    worktree: ""      # v2 placeholder
+```
+
+### Process
+
+1. **Identify decomposition boundaries.** Look for independent subsystems, layers, or workstreams in the research brief — parts of the task that could be researched, planned, and implemented largely independently of one another.
+2. **Propose 2-6 streams.** Fewer than 2 means the task doesn't need hierarchical decomposition (use ordinary `breakdown` mode instead). More than 6 usually means the boundaries are too fine-grained — merge related streams.
+   - If your analysis only turns up 1 natural stream, decomposition is degenerate: proceed anyway (produce a 1-stream `project.yaml`) but call this out explicitly in your response — the coordination overhead of hierarchical mode likely isn't worth it for a single stream.
+3. **Assign kebab-case slugs.** Every stream's `slug` must be lowercase kebab-case (`[a-z0-9]+(-[a-z0-9]+)*`) — it becomes that stream's directory name. Reject/normalize any slug containing spaces, slashes, dots, uppercase, or non-ASCII characters before writing the file.
+4. **Build the dependency graph.** Populate `depends_on` with edges between **sibling slugs only** — a stream may only depend on other streams declared in this same `streams[]` list. Never reference a slug from a different nesting level (e.g., a slug that belongs to one of this project's own sub-streams once it's later decomposed). This is the same "no cross-level dependency" rule the Execution Graph in `breakdown` mode enforces for steps, one level up.
+5. **Pick the default `gate_strategy`:**
+   - `per-stream` if `len(streams) <= 3` (gate after every stream completes)
+   - `per-level` otherwise (gate once per wave of independent streams, not after each one)
+   - Note this as a default recommendation in your response — the orchestrator/user may override it before approving.
+6. **Check nesting depth (advisory only).** If `<project-dir>` is itself nested more than 3 levels deep under the workspace root (i.e., this `decompose` call would produce a 4th-or-deeper `project.yaml`), emit a warning that depth is getting excessive, but do not refuse — write the file anyway.
+7. **Check for an existing `project.yaml`.** If `<project-dir>/project.yaml` already exists, do NOT silently overwrite it — `project.yaml` is the resumability source of truth and may already track in-progress stream `status`. Refuse by default and report that a `project.yaml` already exists; only regenerate it if the prompt explicitly says to force a re-decomposition (e.g., `Mode: decompose --force`), in which case back up the existing file to `project.yaml.bak` before writing the new one.
+8. **Write the file** by building a Python dict and dumping it with PyYAML, invoked via `python3 -c`:
+   ```bash
+   python3 -c "
+   import yaml
+   data = {
+       'name': 'Project display name',
+       'description': 'One-line summary',
+       'created': '2026-08-03',
+       'gate_strategy': 'per-stream',
+       'streams': [
+           {'name': 'stream-a', 'slug': 'stream-a', 'description': '...',
+            'status': 'pending', 'depends_on': [], 'branch': '', 'worktree': ''},
+       ],
+   }
+   with open('<project-dir>/project.yaml', 'w') as f:
+       yaml.safe_dump(data, f, sort_keys=False)
+   "
+   ```
+   If this fails with `ModuleNotFoundError: No module named 'yaml'`, do not surface the raw traceback — report clearly: "PyYAML is required for hierarchical projects. Install it with `pip3 install pyyaml`." and stop.
+9. **Do NOT create stream subdirectories or their artifacts.** `decompose` mode only proposes the graph and writes `project.yaml`. Creating `<project-dir>/<stream-slug>/` directories and kicking off each stream's own research/plan/QA/implement/verify pipeline is the orchestrator's job, once the user has reviewed and approved the proposed `project.yaml`.
+
+### Recursive use
+
+`decompose` mode is not root-only. The same mode can be invoked again with a different `<project-dir>` pointing at one of the just-created stream's own subdirectory, if that stream itself turns out to need further decomposition into sub-streams (e.g., `Agent(subagent_type="adlc-planner", Mode: decompose, project-dir: ".adlc/add-payments/billing-stream")`). Steps 1-9 above apply identically — only `<project-dir>` changes. There is no separate "nested decompose" mode; recursion is just re-invoking `decompose` one level deeper.
+
+### Worked Example
+
+**Input** (`1-research-brief.md` excerpt, task: "Add hierarchical project management to the ADLC plugin"):
+
+> Relevant Code: `plugins/adlc/commands/adlc.md` (orchestrator, hardcodes flat paths), `plugins/adlc/agents/adlc-planner.md` (breakdown mode, closest precedent for dependency graphs), `~/.config/adlc/config` (JSON config)... Top Risks: pervasive path hardcoding across the orchestrator; recursive orchestration is unprecedented in a prose-driven plugin; no manifest/schema precedent for `project.yaml`.
+
+**Output** (`project.yaml`):
+
+```yaml
+name: "Hierarchical project management"
+description: "Multi-stream projects with dependency graphs and a project.yaml registry"
+created: "2026-08-03"
+gate_strategy: "per-stream"
+streams:
+  - name: planner-decompose-mode
+    slug: planner-decompose-mode
+    description: "Add Mode: decompose to the planner to propose streams + project.yaml"
+    status: pending
+    depends_on: []
+    branch: ""
+    worktree: ""
+  - name: orchestrator-recursion
+    slug: orchestrator-recursion
+    description: "Teach the orchestrator to walk project.yaml and spawn per-stream pipelines"
+    status: pending
+    depends_on: []
+    branch: ""
+    worktree: ""
+  - name: status-dashboard
+    slug: status-dashboard
+    description: "Add /adlc-status command to render project.yaml as a tree"
+    status: pending
+    depends_on: ["orchestrator-recursion"]
+    branch: ""
+    worktree: ""
+```
+
+Note `status-dashboard` depends on `orchestrator-recursion` (the dashboard reads the state the orchestrator produces), while `planner-decompose-mode` and `orchestrator-recursion` are independent siblings that can proceed in parallel. Since `len(streams) == 3`, `gate_strategy` defaults to `per-stream`.
 
 ## Tiered Output
 
@@ -55,6 +161,8 @@ When producing `2-plan.md`, also produce `2-plan-brief.md` (compact, ~30% of ful
 - Feature Gating (flag name + placement only)
 
 The brief is what implementers will read. Also produce per-step briefs at `2-plan-S1.md`, `2-plan-S2.md`, etc. — each contains only that step's section + relevant gating + 1-line reference to architecture.
+
+`decompose` mode does not follow this tiered-output pattern — its only output is `<project-dir>/project.yaml` (no brief, no per-step slices). Each stream produces its own `2-plan.md`/`2-plan-brief.md`/per-step briefs later, once it runs its own `breakdown` mode inside its own subdirectory.
 
 ## Memory
 
