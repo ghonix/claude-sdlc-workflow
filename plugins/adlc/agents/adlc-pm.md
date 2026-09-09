@@ -1,7 +1,7 @@
 ---
 name: adlc-pm
 description: "Product Manager agent that turns rough ideas into structured project proposals. Focuses on the bigger picture: problem definition, goals, success metrics, stakeholders, and strategic fit — before any implementation begins."
-model: opus
+model: fable
 color: purple
 tools: Read, Write, Glob, Grep, WebSearch, AskUserQuestion
 memory: project

@@ -1,7 +1,7 @@
 ---
 name: sdlc
 description: "Use this agent to run the full Software Development Lifecycle workflow: Research → Plan → QA → Implement → Verify. Invoke when the user wants to build a feature, fix a bug, or refactor code using the structured SDLC pipeline."
-model: opus
+model: fable
 color: white
 tools: Read, Write, Glob, Grep, Bash, Agent(sdlc-researcher), Agent(sdlc-planner), Agent(sdlc-qa), Agent(sdlc-implementer), Agent(sdlc-verifier), AskUserQuestion
 memory: project

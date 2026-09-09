@@ -1,7 +1,7 @@
 ---
 name: sdlc-planner
 description: "SDLC Phase 2: Planning agent that reads the research brief and produces a detailed implementation plan with clear steps, file changes, and decision rationale."
-model: opus
+model: fable
 color: yellow
 tools: Read, Glob, Grep, Bash, Write, mcp__*
 memory: project

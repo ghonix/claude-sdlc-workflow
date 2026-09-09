@@ -1,7 +1,7 @@
 ---
 name: adlc-verifier
 description: "ADLC Phase 5: Verification agent that reviews implementation against the plan and QA criteria, runs tests, and produces a final verification report."
-model: opus
+model: fable
 color: blue
 tools: Read, Write, Glob, Grep, Bash, Agent(code-reviewer)
 memory: project
@@ -49,7 +49,7 @@ Your prompt may include a `Mode` parameter to gather one slice of evidence. The 
 | `test-run` | Run the project's test suite, parse output, report pass/fail counts and which tests are new (from QA test plan) | `5-verify-tests.md` | sonnet |
 | `code-review` | Delegate to `code-reviewer` sub-agent and capture its output verbatim | `5-verify-review.md` | sonnet |
 | `regression-check` | Verify the regression boundaries from QA brief — read the relevant code paths and confirm nothing in those areas changed unexpectedly. | `5-verify-regression.md` | sonnet |
-| `synthesize` | Read all `5-verify-*.md` files. Apply judgment to produce final verdict in `5-verification.md`. This is the ONLY mode that uses opus — the orchestrator passes `model="sonnet"` when spawning all evidence modes. | `5-verification.md` | opus |
+| `synthesize` | Read all `5-verify-*.md` files. Apply judgment to produce final verdict in `5-verification.md`. This is the ONLY mode that uses fable — the orchestrator passes `model="sonnet"` when spawning all evidence modes. | `5-verification.md` | fable |
 
 If `Mode` is absent, do the full Verification Protocol below sequentially and write to `5-verification.md`.
 

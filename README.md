@@ -1,6 +1,6 @@
 # SDLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v1.3.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v1.3.1-blue?style=flat)
 
 A structured, agent-driven Software Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each with a specialized agent, a concrete artifact, and a human gate.
 
@@ -41,13 +41,13 @@ Research → [Gate] → Plan → [Gate] → QA → [Gate] → Implement → [Gat
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                        SDLC Orchestrator (sdlc)                         │
-│                    opus · coordinates all phases                         │
+│                   fable · coordinates all phases                         │
 └──────────────────────────────┬───────────────────────────────────────────┘
                                │
          Phase 1               │              Phase 2
     ┌─────────────┐     [Human Gate]     ┌─────────────┐
     │  RESEARCH   │─────────────────────▶│    PLAN     │
-    │  sonnet     │                      │    opus     │
+    │  sonnet     │                      │    fable    │
     │  read-only  │                      │  architect  │
     └─────────────┘                      └──────┬──────┘
     → 1-research.md                             │ [Human Gate]
@@ -66,7 +66,7 @@ Research → [Gate] → Plan → [Gate] → QA → [Gate] → Implement → [Gat
                                                   Phase 5
                                              ┌─────────────┐
                                              │   VERIFY    │
-                                             │    opus     │
+                                             │    fable    │
                                              │   judge     │
                                              └─────────────┘
                                              → 5-verification.md
@@ -112,7 +112,7 @@ Research Brief
 
 ### Phase 2: Plan
 
-**Agent**: `sdlc-planner` · **Model**: opus · **Tools**: read-only + write
+**Agent**: `sdlc-planner` · **Model**: fable · **Tools**: read-only + write
 
 **Goal**: Design the implementation approach with explicit architecture comparison, feature gating strategy, and a parallelizable execution graph.
 
@@ -148,7 +148,7 @@ Implementation Plan
 └── Dependencies
 ```
 
-**Why this phase uses opus**: The planner makes the highest-stakes decisions in the workflow — architectural approach, gating strategy, and parallelism safety. These require deep reasoning about tradeoffs and second-order effects. A wrong plan means wasted implementation work; a correct plan means the implementer can execute on sonnet without needing to reason about design.
+**Why this phase uses fable**: The planner makes the highest-stakes decisions in the workflow — architectural approach, gating strategy, and parallelism safety. These require deep reasoning about tradeoffs and second-order effects. A wrong plan means wasted implementation work; a correct plan means the implementer can execute on sonnet without needing to reason about design.
 
 **Why current vs proposed architecture matters**: Without the explicit "before → after" comparison, plans tend to describe only the new state. This leaves the implementer guessing about what exists today and which changes are intentional vs accidental. The architecture comparison makes the delta visible and reviewable.
 
@@ -231,7 +231,7 @@ Implementation Summary
 
 ### Phase 5: Verify
 
-**Agent**: `sdlc-verifier` · **Model**: opus · **Tools**: read-only + bash + code-reviewer delegation
+**Agent**: `sdlc-verifier` · **Model**: fable · **Tools**: read-only + bash + code-reviewer delegation
 
 **Goal**: Independently validate that the implementation is correct, complete, and ready for review.
 
@@ -258,7 +258,7 @@ Verification Report
 └── Recommendation (SHIP IT / FIX AND RE-VERIFY / NEEDS REWORK)
 ```
 
-**Why this phase uses opus**: Verification is judgment-heavy. The verifier must decide whether a deviation from the plan is acceptable, whether a test adequately covers an edge case, and whether the overall implementation is sound. A false PASS is worse than a false FAIL — it lets bugs through. This requires the reasoning model's ability to evaluate nuance.
+**Why this phase uses fable**: Verification is judgment-heavy. The verifier must decide whether a deviation from the plan is acceptable, whether a test adequately covers an edge case, and whether the overall implementation is sound. A false PASS is worse than a false FAIL — it lets bugs through. This requires the reasoning model's ability to evaluate nuance.
 
 **Why the verifier delegates code review**: The `code-reviewer` agent is a specialist — it knows how to evaluate code quality, security, and performance. The verifier's job is broader: it checks the implementation against the plan, QA criteria, and regression boundaries. By delegating, neither agent duplicates the other's work.
 
@@ -269,10 +269,10 @@ Verification Report
 | Phase | Model | Rationale |
 |-------|-------|-----------|
 | Research | sonnet | Fast exploration, read-heavy, no decisions |
-| Plan | **opus** | Architectural decisions, tradeoff analysis, gating strategy |
+| Plan | **fable** | Architectural decisions, tradeoff analysis, gating strategy |
 | QA | sonnet | Structured output, adversarial but mechanical |
 | Implement | sonnet | Follows a detailed blueprint, speed over reasoning |
-| Verify | **opus** | Judgment calls on correctness, nuanced evaluation |
+| Verify | **fable** | Judgment calls on correctness, nuanced evaluation |
 
 The principle: **reason at the boundaries, execute in the middle**. The two phases that make decisions (what to build, whether it's right) get the reasoning model. The phase that follows instructions (write this code) gets the fast model.
 
@@ -382,6 +382,13 @@ Use the sdlc-verifier agent to verify [implementation]
 
 ## Changelog
 
+### v1.3.1
+
+Switch reasoning-tier model from opus to fable.
+
+- **Model rename**: all agents previously using `model: opus` now use `model: fable` — PM, orchestrator, planner, verifier (both SDLC and ADLC plugins)
+- **Doc updates**: CLAUDE.md, README.md, and agent/command markdown updated to reflect fable as the reasoning model
+
 ### v1.3.0
 
 ADLC PM agent and implementer context scoping.
@@ -425,4 +432,4 @@ Initial release.
 - Feature gating discovery, strategy design, and enforcement across all phases
 - Human gates between every phase with skip/revise/abort options
 - File-based artifact passing via `.sdlc/` directory
-- Model allocation: opus for reasoning (Plan, Verify), sonnet for execution (Research, QA, Implement)
+- Model allocation: fable for reasoning (Plan, Verify), sonnet for execution (Research, QA, Implement)

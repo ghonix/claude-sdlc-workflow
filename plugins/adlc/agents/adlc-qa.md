@@ -37,7 +37,7 @@ Your prompt may include a `Mode` parameter to focus on one slice. The orchestrat
 | Mode | Focus | Output File | Recommended Model |
 |------|-------|-------------|-------------------|
 | `criteria` | Acceptance criteria per plan step + test plan (which test files, what test cases). Mechanical extraction from the plan. | `3-qa-criteria.md` | sonnet |
-| `adversary` | Edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries. Reasoning-heavy. | `3-qa-adversary.md` | opus (orchestrator passes `model="opus"` at spawn time) |
+| `adversary` | Edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries. Reasoning-heavy. | `3-qa-adversary.md` | fable (orchestrator passes `model="fable"` at spawn time) |
 | `synthesize` | Read both `3-qa-criteria.md` and `3-qa-adversary.md` and merge into `3-qa.md` (full) + `3-qa-brief.md` (compact). | `3-qa.md` + `3-qa-brief.md` | sonnet |
 
 If `Mode` is absent, do the full QA Protocol and write to `3-qa.md` + `3-qa-brief.md` directly.

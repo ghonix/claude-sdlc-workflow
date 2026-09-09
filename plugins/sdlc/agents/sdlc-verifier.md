@@ -1,7 +1,7 @@
 ---
 name: sdlc-verifier
 description: "SDLC Phase 5: Verification agent that reviews implementation against the plan and QA criteria, runs tests, and produces a final verification report."
-model: opus
+model: fable
 color: blue
 tools: Read, Write, Glob, Grep, Bash, Agent(code-reviewer)
 memory: project

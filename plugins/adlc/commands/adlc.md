@@ -85,7 +85,7 @@ This section implements `process_project(<project-dir>)`. Treat it as a function
 
 If `<project-dir>/project.yaml` does not exist yet (this only happens on the very first entry into hierarchical mode, since `## Project Mode Detection` already routed us here based on its presence — this check matters for recursive re-entries, where a sub-stream directory might not have a `project.yaml` of its own yet and should instead go through the Leaf path, never here):
 
-1. Spawn `Agent(subagent_type="adlc-planner", model="opus", description="Decompose project", prompt="Project directory: <project-dir>\nMode: decompose\nDepth: <depth>\n\nTask: <task>")`.
+1. Spawn `Agent(subagent_type="adlc-planner", model="fable", description="Decompose project", prompt="Project directory: <project-dir>\nMode: decompose\nDepth: <depth>\n\nTask: <task>")`.
 2. Present the proposed `project.yaml` (streams, `depends_on` graph, `gate_strategy`) to the user.
 3. **Gate**: "Proposed decomposition into N streams with `gate_strategy: <value>`. Review `<project-dir>/project.yaml`. Approve, edit, or cancel?" Do NOT create any `<project-dir>/<stream-slug>/` directory and do NOT proceed to Step 1 until the user approves (editing `project.yaml` in place counts as approval of the edited version — re-read it after edits).
 4. Once approved, create empty stream directories: `mkdir -p "<project-dir>/<stream-slug>"` for every entry in `streams[]`. Do not put anything else in them yet — each stream's own pipeline creates its own artifacts when its turn comes up.
@@ -337,7 +337,7 @@ Present a brief summary to the user (key files, top risks, open questions).
 
 ### Phase 2: Plan (Architect → Breakdown)
 
-#### Step 2a: Architect (opus)
+#### Step 2a: Architect (fable)
 
 ```
 Agent(subagent_type="adlc-planner", description="Architect approach",
@@ -346,7 +346,7 @@ Agent(subagent_type="adlc-planner", description="Architect approach",
 
 Produces `2-architecture.md`.
 
-#### Step 2b: Critique (opus, optional)
+#### Step 2b: Critique (fable, optional)
 
 If `Depth: thorough`, spawn critic in parallel with breakdown:
 ```
@@ -378,7 +378,7 @@ Agent(subagent_type="adlc-qa", description="QA criteria",
   prompt="Project directory: <project-dir>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 
-Agent(subagent_type="adlc-qa", model="opus", description="QA adversary",
+Agent(subagent_type="adlc-qa", model="fable", description="QA adversary",
   prompt="Project directory: <project-dir>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 ```
@@ -467,7 +467,7 @@ Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: code r
   run_in_background=true)
 ```
 
-When all evidence agents complete, spawn synthesizer (opus):
+When all evidence agents complete, spawn synthesizer (fable):
 ```
 Agent(subagent_type="adlc-verifier", description="Verify: synthesize",
   prompt="Project directory: <project-dir>\nMode: synthesize\nDepth: <depth>\n\nRead all 5-verify-*.md files. Task: <task>")
