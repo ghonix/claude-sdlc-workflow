@@ -62,6 +62,23 @@ Investigate the relevant parts of the codebase:
 - Note any tests that cover the affected code
 - Check for CLAUDE.md, README, or architecture docs
 
+### Step 2.5: Reproduce the Bug (bug fixes only)
+
+**Does this step apply?** Check the task description for bug-fix signals: "fix", "bug", "broken", "regression", "incorrect", "wrong", "fails"/"failing", "crash", "error", "doesn't work"/"not working", or an expected-vs-actual mismatch. If the prompt includes `Task-Type: bug` or `Task-Type: feature`, that overrides the heuristic. If ambiguous, skip this step and note the ambiguity in Open Questions.
+
+**If this is a bug fix:**
+
+1. **Identify the test framework** — from Step 2 you already know what test files exist and how they're structured. Use the same framework, conventions, and patterns.
+2. **Write a minimal failing test** — create a test file (or add a test case to an existing file) that directly exercises the reported broken behavior. The test should:
+   - Set up the minimal preconditions for the bug to manifest
+   - Call the code path described in the bug report
+   - Assert the **expected** (correct) behavior — so the test FAILS against the current buggy code
+3. **Run the test** — execute it with Bash. Capture the full output.
+4. **Confirm the failure matches the hypothesis** — verify the test fails for the reason you expect, not for an unrelated error (import issue, setup problem, etc.). If it fails for the wrong reason, adjust and re-run.
+5. **Record the result** — fill in the Bug Reproduction section of the brief.
+
+**If reproduction isn't feasible** (no test framework in the project, the bug is environment-dependent, requires external services, involves a race condition, etc.): document **why** explicitly in the Bug Reproduction section. This is valuable signal for the planner — not a researcher failure.
+
 ### Step 3: Identify Risks and Dependencies
 
 - What other systems or modules does this touch?
@@ -110,6 +127,20 @@ Write your findings to `<project-dir>/1-research.md` (the project directory from
 ## Existing Patterns
 [Conventions, abstractions, and patterns already in use that the implementation should follow]
 
+## Bug Reproduction
+- **Status**: Reproduced / Not Reproduced / Not Attempted (feature work)
+- **Test file**: [path where the reproduction test was written]
+- **Test code**:
+  ```
+  [minimal failing test — fenced code block]
+  ```
+- **Failure output**: [verbatim captured stdout/stderr from running the test]
+- **Root cause confirmed**: [one line connecting the test failure to the hypothesized root cause]
+
+[When Status is "Not Reproduced", replace Test code/Failure output fields with:]
+- **Why not reproduced**: [specific reason — no test framework, environment-dependent, race condition, etc.]
+[When Status is "Not Attempted (feature work)", omit all sub-fields.]
+
 ## Feature Gating Framework
 [Describe the project's feature flag / experimentation system, or state "None found"]
 - **Library/System**: [name and version, or "homegrown"]
@@ -136,3 +167,4 @@ Write your findings to `<project-dir>/1-research.md` (the project directory from
 3. **Flag unknowns** — if you can't find something, say so. Don't guess.
 4. **Stay focused** — only research what's relevant to the task. Don't map the entire codebase.
 5. **Create the project directory** if it doesn't exist: `mkdir -p <project-dir>`
+6. **For bug fixes, reproduce before you finalize** — a failing test is worth more than a hypothesis. Write and run the reproduction test before finalizing the brief.

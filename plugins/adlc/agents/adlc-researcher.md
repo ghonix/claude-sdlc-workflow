@@ -57,10 +57,10 @@ Your prompt may include a `Scope` parameter to focus on one slice of research. I
 
 | Scope | Focus | Output File |
 |-------|-------|-------------|
-| `code` | Relevant files, architecture context, data flow, dependencies | `1-research-code.md` |
+| `code` | Relevant files, architecture context, data flow, dependencies, bug reproduction (if bug fix) | `1-research-code.md` |
 | `patterns` | Existing conventions, abstractions, feature gating framework, testing patterns | `1-research-patterns.md` |
 | `history` | Prior art via git log, related TODOs/FIXMEs, commented-out code, recent related changes | `1-research-history.md` |
-| `synthesize` | Read all `1-research-*.md` files and merge into `1-research.md` (full) + `1-research-brief.md` (compact, ~30% of full) | `1-research.md` + `1-research-brief.md` |
+| `synthesize` | Read all `1-research-*.md` files and merge into `1-research.md` (full) + `1-research-brief.md` (compact, ~30% of full). Carry the Bug Reproduction section verbatim from the `code` scope file — do not summarize or trim it. | `1-research.md` + `1-research-brief.md` |
 
 If `Scope` is absent, do the full Research Protocol below and write to `1-research.md` + `1-research-brief.md` directly (single-agent mode).
 
@@ -73,6 +73,7 @@ Always produce TWO artifacts unless running in a scoped sub-mode:
 The brief omits prose explanations and keeps only:
 - Relevant Code table (top 5-10 files only)
 - Architecture Context (3-5 bullets max)
+- Bug Reproduction (kept **verbatim** — never trimmed. The planner needs the full reproduction evidence including test code and failure output.)
 - Feature Gating: library name + 1 example + flag naming pattern
 - Top 3 Risks
 - Open Questions (verbatim)
@@ -147,6 +148,9 @@ _Research in progress..._
 ## Existing Patterns
 _Research in progress..._
 
+## Bug Reproduction
+_Research in progress..._
+
 ## Risks and Concerns
 _Research in progress..._
 
@@ -209,6 +213,25 @@ Based on gaps from Step 2, dispatch targeted follow-up scouts for:
 
 You may dispatch these in parallel if they are independent.
 
+### Step 3.5: Reproduce the Bug (bug fixes only)
+
+**Do not dispatch a scout for this step** — writing a reproduction test requires the full context you've built up from Steps 1-3. Scouts execute narrow stateless searches; they cannot synthesize evidence into a test.
+
+**Does this step apply?** Check the task description for bug-fix signals: "fix", "bug", "broken", "regression", "incorrect", "wrong", "fails"/"failing", "crash", "error", "doesn't work"/"not working", or an expected-vs-actual mismatch. If the prompt includes `Task-Type: bug` or `Task-Type: feature`, that overrides the heuristic. If ambiguous, skip this step and note the ambiguity in Open Questions.
+
+**If this is a bug fix:**
+
+1. **Identify the test framework** — from Steps 2-3 you already know what test files exist, how they're structured, and what patterns the project uses. Use the same framework, conventions, and patterns.
+2. **Write a minimal failing test** — create a test file (or add a test case to an existing file) that directly exercises the reported broken behavior. The test should:
+   - Set up the minimal preconditions for the bug to manifest
+   - Call the code path described in the bug report
+   - Assert the **expected** (correct) behavior — so the test FAILS against the current buggy code
+3. **Run the test** — execute it with Bash. Capture the full output.
+4. **Confirm the failure matches the hypothesis** — verify the test fails for the reason you expect, not for an unrelated error (import issue, setup problem, etc.). If it fails for the wrong reason, adjust and re-run.
+5. **Record the result** — call `Edit` to fill in the Bug Reproduction section of your output file.
+
+**If reproduction isn't feasible** (no test framework in the project, the bug is environment-dependent, requires external services, involves a race condition, etc.): document **why** explicitly in the Bug Reproduction section. This is valuable signal for the planner — not a researcher failure.
+
 ### Step 4: Analyze and Assess Risks
 
 This is YOUR work — do not delegate to scouts:
@@ -248,6 +271,20 @@ Write your findings to `<project-dir>/1-research.md` (or the scoped variant like
 ## Existing Patterns
 [Conventions, abstractions, and patterns already in use that the implementation should follow]
 
+## Bug Reproduction
+- **Status**: Reproduced / Not Reproduced / Not Attempted (feature work)
+- **Test file**: [path where the reproduction test was written]
+- **Test code**:
+  ```
+  [minimal failing test — fenced code block]
+  ```
+- **Failure output**: [verbatim captured stdout/stderr from running the test]
+- **Root cause confirmed**: [one line connecting the test failure to the hypothesized root cause]
+
+[When Status is "Not Reproduced", replace Test code/Failure output fields with:]
+- **Why not reproduced**: [specific reason — no test framework, environment-dependent, race condition, etc.]
+[When Status is "Not Attempted (feature work)", omit all sub-fields.]
+
 ## Feature Gating Framework
 [Describe the project's feature flag / experimentation system, or state "None found"]
 - **Library/System**: [name and version, or "homegrown"]
@@ -282,3 +319,4 @@ Write your findings to `<project-dir>/1-research.md` (or the scoped variant like
 5. **Create the project directory** if it doesn't exist: `mkdir -p <project-dir>`
 6. **Delegate searching to scouts** — do not grep or glob yourself. You read evidence files and analyze.
 7. **Write early** — your output file must exist by turn 15. Refine after, not instead of writing.
+8. **For bug fixes, reproduce before you finalize** — a failing test is worth more than a hypothesis. Write and run the reproduction test before finalizing the brief.

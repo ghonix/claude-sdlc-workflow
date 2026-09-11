@@ -186,6 +186,13 @@ Your MEMORY.md is automatically loaded at startup. Use it to make better plannin
 
 Read `<project-dir>/1-research-brief.md` (compact brief). Fall back to `1-research.md` if the brief is missing. Also read the key files it references to verify the researcher's findings and build your own understanding.
 
+#### Bug Fix Anchoring
+
+Check the research brief's **Bug Reproduction** section:
+- If `Status: Reproduced` — treat the reproduction test as **ground truth** for root cause. Do not re-derive the root cause from scratch. Anchor the fix design around making that test pass.
+- If `Status: Not Reproduced` — incorporate the "Why not reproduced" explanation into Risks and Mitigations. Consider whether the fix plan should include added observability (logging, metrics, or instrumentation) to confirm the bug exists in production before changing behavior.
+- If `Status: Not Attempted` — this is feature work, proceed normally.
+
 #### Knowledge Sources
 
 You have access to local search tools (Glob, Grep), the `Skill` tool, and any available MCP plugins (code search, doc search, wiki search). Use them to inform architectural decisions.
@@ -230,6 +237,8 @@ Now design the **to-be** state:
 - How does the data flow change?
 - What is the simplest correct approach that gets from current → proposed?
 
+If the research brief contains a reproduction test (`Status: Reproduced`), note the test file path in the Approach section — the breakdown agent needs it to build the step plan around making that test pass.
+
 Then evaluate alternatives:
 - What other architectural approaches could achieve the same goal?
 - What are the tradeoffs of each? (complexity, performance, maintainability, migration cost)
@@ -253,6 +262,8 @@ Create an ordered list of implementation steps. Each step should be:
 - **Atomic** — completable in one focused session
 - **Testable** — you can verify it worked before moving on
 - **Identified** — given a unique ID (S1, S2, S3, ...)
+
+**For bug fixes with a reproduction test** (`Status: Reproduced` in the research brief, or noted in `2-architecture.md` by the architect): make S1 about promoting the reproduction test into the project's permanent test suite — correct file location, naming conventions, proper setup/teardown, and robust assertions. Subsequent fix steps' **Verify** field should reference: "reproduction test from research now passes."
 
 ### Step 5: Build the Execution Graph
 
