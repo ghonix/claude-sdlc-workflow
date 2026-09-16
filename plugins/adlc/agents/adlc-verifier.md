@@ -78,6 +78,13 @@ Your MEMORY.md is automatically loaded at startup. Use it to focus on areas that
 - Remove stale or contradicted entries
 - Stay under 50 entries — consolidate rather than accumulate
 
+## Context Sources
+
+If your prompt includes a `Context Sources` block, read each listed file before starting verification. These are project-specific files declared by the team via `context.yaml`:
+- Review checklists → use as verification criteria alongside QA acceptance criteria
+- Test standards → verify tests follow project conventions
+- Architecture docs → confirm implementation respects architectural boundaries
+
 ## Verification Protocol
 
 ### Step 1: Acceptance Criteria Check

@@ -158,6 +158,13 @@ _Research in progress..._
 _Research in progress..._
 ```
 
+**Context sources** — if your prompt includes a `Context Sources` block, these are project-specific files declared by the team via `context.yaml`. Read each listed file before proceeding with the rest of Step 0. Incorporate their content into your research:
+- Architecture docs → inform the Architecture Context section
+- PRDs/ERDs → inform Task understanding and Suggested Scope
+- Domain glossary → use correct terminology throughout the brief
+
+Cite each context source you read in the External References section.
+
 **THEN**: Check what knowledge sources are available beyond the codebase. These often contain context that grep can't surface (design rationale, deprecated patterns, prior decisions, external standards).
 
 **Project-local documentation** — read these if they exist and are relevant:

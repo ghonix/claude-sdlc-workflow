@@ -103,6 +103,14 @@ Manage agent memories:
 /adlc-memory clear
 ```
 
+Configure context sources (ERDs, PRDs, architecture docs, coding guidelines):
+```
+/adlc-context             # view configured sources
+/adlc-context setup       # interactive first-time setup
+/adlc-context add         # add a source
+/adlc-context remove      # remove a source
+```
+
 ## Artifacts
 
 Each phase writes to `.sdlc/` in the project root:

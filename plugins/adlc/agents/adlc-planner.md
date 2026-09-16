@@ -193,6 +193,15 @@ Check the research brief's **Bug Reproduction** section:
 - If `Status: Not Reproduced` — incorporate the "Why not reproduced" explanation into Risks and Mitigations. Consider whether the fix plan should include added observability (logging, metrics, or instrumentation) to confirm the bug exists in production before changing behavior.
 - If `Status: Not Attempted` — this is feature work, proceed normally.
 
+#### Context Sources
+
+If your prompt includes a `Context Sources` block, read each listed file before designing the architecture. These are project-specific files declared by the team via `context.yaml`:
+- ERDs → ground your architecture mapping in the declared system model
+- PRDs → verify your proposed approach satisfies stated requirements
+- Design docs → align with established architectural decisions
+
+Cite each context source you read in the External References section.
+
 #### Knowledge Sources
 
 You have access to local search tools (Glob, Grep), the `Skill` tool, and any available MCP plugins (code search, doc search, wiki search). Use them to inform architectural decisions.

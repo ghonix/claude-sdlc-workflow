@@ -21,7 +21,7 @@
     {
       "name": "adlc",
       "description": "Agentic Development Lifecycle workflow: Research → Plan → QA → Implement → Verify. Gated phases with parallel execution support.",
-      "version": "2.0.1",
+      "version": "2.1.0",
       "author": {
         "name": "Amr Ghoneim",
         "email": "ghonix@gmail.com"

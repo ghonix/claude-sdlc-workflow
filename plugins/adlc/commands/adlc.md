@@ -39,6 +39,41 @@ cat ~/.config/adlc/config 2>/dev/null
 
 Call the resolved absolute path `<workspace_dir>` for the rest of this run.
 
+## Context Sources
+
+After resolving `<workspace_dir>`, check for a context source config:
+
+```bash
+test -f "<workspace_dir>/context.yaml" && echo "found" || echo "not-found"
+```
+
+- **If found**: Read and parse `<workspace_dir>/context.yaml` with `python3 -c "import yaml; ..."`. Store the parsed `sources` list for prompt injection later.
+- **If not found AND this is the first run** (no project directories exist under `<workspace_dir>` yet — `ls <workspace_dir>/*/1-research*.md 2>/dev/null` returns nothing):
+
+  Ask via `AskUserQuestion`:
+  > "Would you like to configure context sources for your agents? Context sources are files your agents should always read — ERDs, PRDs, architecture docs, coding guidelines, etc. You can also configure this later with `/adlc-context setup`."
+
+  Options: "Yes — set up now", "Skip — I'll configure later"
+
+  If "Yes": run the interactive setup (same as `/adlc-context setup` — walk through each role, collect paths/descriptions, write `<workspace_dir>/context.yaml`).
+  If "Skip": proceed without context sources.
+
+- **If not found AND projects already exist**: this isn't the first run — the user chose to skip or hasn't configured sources. Proceed silently.
+
+### Prompt injection
+
+When building each agent's spawn prompt, filter the parsed sources for entries whose `roles` list includes the agent's role name (or `all`). If any match, append this block to the `prompt=` string:
+
+```
+Context Sources (read these files before starting your protocol — project-specific guidance declared by the team):
+- <path>: <description>
+- <path>: <description>
+```
+
+Role name mapping for filtering: `adlc-researcher` → `researcher`, `adlc-planner` → `planner`, `adlc-qa` → `qa`, `adlc-implementer` → `implementer`, `adlc-verifier` → `verifier`.
+
+If no sources match the role, append nothing — do not add an empty block.
+
 ## Depth
 
 Check if the user's task description includes a depth hint: `quick`, `standard`, or `thorough`. Extract and strip it. If absent, default to **standard**.

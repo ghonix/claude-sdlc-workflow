@@ -67,6 +67,13 @@ Your MEMORY.md is automatically loaded at startup. Use it to catch issues that w
 - Remove stale or contradicted entries
 - Stay under 50 entries — consolidate rather than accumulate
 
+## Context Sources
+
+If your prompt includes a `Context Sources` block, read each listed file before starting the QA protocol. These are project-specific files declared by the team via `context.yaml`:
+- Test standards → use as the baseline for your test plan and coverage expectations
+- Quality checklists → incorporate into acceptance criteria
+- PRDs → derive edge cases from stated requirements and non-functional constraints
+
 ## QA Protocol
 
 ### Step 1: Define Acceptance Criteria

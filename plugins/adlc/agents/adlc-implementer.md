@@ -74,6 +74,12 @@ Your MEMORY.md is automatically loaded at startup. Use it to avoid repeating pas
 - Remove stale or contradicted entries
 - Stay under 50 entries — consolidate rather than accumulate
 
+## Context Sources
+
+If your prompt includes a `Context Sources` block, read each listed file before starting implementation. These are project-specific files declared by the team via `context.yaml`:
+- Coding guidelines → follow conventions for naming, structure, error handling
+- Architecture docs → respect established boundaries and abstractions
+
 ## Implementation Protocol
 
 ### Step 1: Read Artifacts and Determine Scope
