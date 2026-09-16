@@ -2,59 +2,9 @@
 
 ## Overview
 
-**v1.3.1** — A structured Software Development Lifecycle (SDLC) workflow for Claude Code, implementing a 5-phase pipeline with parallel execution support.
+**v2.1.0** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
 
 ## Pipeline
-
-```
-[PM Proposal] → Research → Plan → QA → Implement (parallel waves) → Verify
-```
-
-The PM phase is optional — use it to define **what to build and why** before the SDLC pipeline handles **how to build it**. Each phase produces a structured artifact and gates on human approval before proceeding.
-
-## Agents (8)
-
-| Agent | Phase | Model | Role |
-|-------|-------|-------|------|
-| `sdlc-pm` | 0. Proposal | fable | Product Manager: turns rough ideas into structured project proposals — problem definition, goals, metrics, stakeholders, strategic fit |
-| `sdlc` | Orchestrator | fable | Coordinates the pipeline, dispatches phase agents, manages human gates |
-| `sdlc-researcher` | 1. Research | sonnet | Explores codebase, gathers context, discovers feature gating framework |
-| `sdlc-planner` | 2. Plan | fable | Maps current→proposed architecture, designs gating strategy, builds execution graph with parallel waves |
-| `sdlc-qa` | 3. QA | sonnet | Shift-left: defines acceptance criteria, edge cases, and test plan BEFORE implementation |
-| `sdlc-implementer` | 4. Implement | sonnet | Writes code and tests. Can be scoped to specific steps for parallel execution |
-| `sdlc-verifier` | 5. Verify | fable | Reviews implementation against plan and QA criteria, delegates code review |
-| `code-reviewer` | (used by verifier) | sonnet | Reviews code quality, security, performance, and correctness |
-
-## Usage
-
-Create a project proposal (PM phase, before implementation):
-```
-Use the sdlc-pm agent to [describe your idea or problem]
-```
-
-Or use the slash command:
-```
-/sdlc-pm add dark mode support
-```
-
-Invoke the full implementation pipeline:
-```
-Use the sdlc agent to [describe your task]
-```
-
-Or invoke individual phases:
-```
-Use the sdlc-researcher agent to investigate [topic]
-Use the sdlc-planner agent to plan [feature]
-```
-
----
-
-## ADLC Plugin
-
-The ADLC plugin is a parallel-first variant of SDLC. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
-
-### Pipeline
 
 ```
 [PM Proposal] → Research (3 parallel scopes, each dispatching scouts → synthesize)
@@ -64,7 +14,9 @@ The ADLC plugin is a parallel-first variant of SDLC. Each phase decomposes into 
   → Verify (4 parallel evidence agents → synthesize)
 ```
 
-### Agents (8)
+The PM phase is optional — use it to define **what to build and why** before the pipeline handles **how to build it**. Each phase produces a structured artifact and gates on human approval before proceeding.
+
+## Agents (8)
 
 | Agent | Phase | Model | Role |
 |-------|-------|-------|------|
@@ -77,7 +29,7 @@ The ADLC plugin is a parallel-first variant of SDLC. Each phase decomposes into 
 | `adlc-implementer` | 4. Implement | sonnet | Parallel per-wave, reads only scoped briefs for assigned steps |
 | `adlc-verifier` | 5. Verify | sonnet/fable | Evidence modes (sonnet) gather in parallel; synthesizer (fable) produces verdict |
 
-### Usage
+## Usage
 
 Start with requirements (recommended for new features):
 ```
@@ -113,7 +65,7 @@ Configure context sources (ERDs, PRDs, architecture docs, coding guidelines):
 
 ## Artifacts
 
-Each phase writes to `.sdlc/` in the project root:
+Each phase writes to the project directory (resolved from `<workspace_dir>/<slug>`):
 
 | File | Phase | Contents |
 |------|-------|----------|
@@ -129,14 +81,16 @@ For parallel execution, implementers write scoped summaries: `4-implementation-S
 
 - **Reasoning at the boundaries**: Plan and Verify use fable (decisions), Research/QA/Implement use sonnet (execution)
 - **Shift-left QA**: Acceptance criteria are defined BEFORE implementation, not after
+- **TDD-first bug fixes**: Researcher writes a failing reproduction test before finalizing the brief; planner anchors the fix design on making that test pass
 - **Feature gating**: Researcher discovers the project's gating framework, planner designs the strategy, implementer enforces it
 - **Parallel waves**: Planner groups independent steps into waves; orchestrator dispatches parallel implementers per wave
-- **File-based data passing**: Each phase writes a `.sdlc/*.md` artifact — survives context limits, human-reviewable between phases
-- **Persistent memory**: Agents learn across SDLC runs via `memory: project` — codebase patterns, past decisions, and failure patterns survive between sessions
+- **Context sources**: Teams declare project-specific files (ERDs, PRDs, architecture docs) per agent role via `context.yaml`; agents read them before starting their protocol
+- **File-based data passing**: Each phase writes artifacts to disk — survives context limits, human-reviewable between phases
+- **Persistent memory**: Agents learn across runs via `memory: project` — codebase patterns, past decisions, and failure patterns survive between sessions
 
 ## Agent Memory
 
-All SDLC agents have persistent memory enabled (`memory: project` scope). Memories are stored in `.claude/agent-memory/<agent-name>/MEMORY.md` in the consuming project.
+All agents have persistent memory enabled (`memory: project` scope). Memories are stored in `.claude/agent-memory/<agent-name>/MEMORY.md` in the consuming project.
 
 Each agent remembers role-specific learnings:
 - **Researcher**: codebase architecture, key locations, feature gating details
@@ -145,10 +99,26 @@ Each agent remembers role-specific learnings:
 - **Implementer**: build/test commands, coding conventions, common pitfalls
 - **Verifier**: recurring quality issues, review patterns, pass/fail history
 
-Manage memories with `/sdlc-memory`:
+## Context Sources
+
+Teams can declare project-specific files that agents should read before starting their protocol. Sources are mapped to agent roles via `<workspace_dir>/context.yaml`:
+
+```yaml
+sources:
+  - path: docs/architecture.md
+    description: System architecture overview
+    roles: [researcher, planner]
+  - path: docs/erd/payments.md
+    description: Level 1 ERD for payments
+    roles: [planner]
+  - path: docs/test-standards.md
+    description: Testing conventions
+    roles: [qa, verifier]
+  - path: docs/coding-guidelines.md
+    description: Coding conventions
+    roles: [implementer]
 ```
-/sdlc-memory              # view all agent memories
-/sdlc-memory view qa      # view specific agent's memory
-/sdlc-memory edit planner # edit an agent's memory
-/sdlc-memory clear        # clear all memories
-```
+
+Valid roles: `researcher`, `planner`, `qa`, `implementer`, `verifier`, `all`.
+
+On first run, the orchestrator prompts for setup. Use `/adlc-context` to manage sources afterward.
