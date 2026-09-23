@@ -1,6 +1,6 @@
 # ADLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v2.1.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v2.2.0-blue?style=flat)
 
 A structured, agent-driven Agentic Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each phase itself decomposed into parallel sub-agents, with a concrete artifact and a human gate.
 
@@ -409,6 +409,20 @@ On first run, the orchestrator asks whether to configure context sources. Manage
 
 ---
 
+## Implementer Runner
+
+By default, the implementer writes code and tests directly in the session (`local`). You can opt into delegating each implementation step to an external coding-agent MCP tool instead (`delegate`) — useful once planning and QA have fully specified the work, so the actual code-writing token cost can be shifted off this session.
+
+- **Opt-in, asked once**: the orchestrator prompts for this on first run, alongside the workspace directory prompt, and remembers the choice in `~/.config/adlc/config`.
+- **Whole-step delegation**: delegation always covers the entire step — implementation and tests together, no coder/tester split.
+- **Bring your own tool**: the plugin never hardcodes a specific MCP server or tool name. You supply the exact tool names (`delegate_create_task_tool`, `delegate_get_task_tool`) and repo identifier (`delegate_repo_param`) for whatever external coding-agent MCP server you have installed, and those live only in your local config.
+- **Parallel submission, serial integration**: within a wave, delegated steps are submitted and polled in parallel (cheap I/O waits). Once the wave's tasks complete, their branches are fetched and merged into the local working tree **one at a time, in step order** — merging into a shared working tree can't safely happen in parallel.
+- **Failure handling**: a failed or timed-out delegated step is surfaced in the wave summary rather than silently falling back to local implementation; you decide whether to retry locally or resubmit.
+
+To change your choice later, edit or delete the `implementer_runner` key in `~/.config/adlc/config`.
+
+---
+
 ## Scope and Limitations
 
 **Sweet spot**: Single feature, bug fix, or focused refactor — tasks that touch 1-15 files and can be planned in 8 or fewer steps.
@@ -465,6 +479,14 @@ Use the adlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v2.2.0
+
+Opt-in delegated implementation runner.
+
+- **`adlc-implementer`**: new `Runner` parameter (`local` default, `delegate`) — delegates a whole step (coder + tester together) to a user-configured external coding-agent MCP tool instead of writing code in-session
+- **Orchestrator**: first-run prompt to opt into delegation and supply your own MCP tool names/repo identifier, stored in `~/.config/adlc/config`; parallel task submission per wave, serialized git integration after the wave completes
+- No vendor-specific tool names are hardcoded anywhere in the plugin — you supply your own delegate MCP server/tool names via local config
 
 ### v2.1.0
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-**v2.1.0** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
+**v2.2.0** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
 
 ## Pipeline
 
@@ -85,6 +85,7 @@ For parallel execution, implementers write scoped summaries: `4-implementation-S
 - **Feature gating**: Researcher discovers the project's gating framework, planner designs the strategy, implementer enforces it
 - **Parallel waves**: Planner groups independent steps into waves; orchestrator dispatches parallel implementers per wave
 - **Context sources**: Teams declare project-specific files (ERDs, PRDs, architecture docs) per agent role via `context.yaml`; agents read them before starting their protocol
+- **Opt-in delegated implementation**: implementation steps can be handed off to an externally-configured coding-agent MCP tool instead of running locally, trading session tokens for async wait time
 - **File-based data passing**: Each phase writes artifacts to disk — survives context limits, human-reviewable between phases
 - **Persistent memory**: Agents learn across runs via `memory: project` — codebase patterns, past decisions, and failure patterns survive between sessions
 
@@ -122,3 +123,13 @@ sources:
 Valid roles: `researcher`, `planner`, `qa`, `implementer`, `verifier`, `all`.
 
 On first run, the orchestrator prompts for setup. Use `/adlc-context` to manage sources afterward.
+
+## Implementer Runner
+
+By default, the implementer writes code and tests directly in the session (`local`). You can opt into delegating each implementation step to an external coding-agent MCP tool instead (`delegate`), to conserve session tokens once planning and QA have fully specified the work.
+
+- Opt-in only, asked once on first run alongside the workspace directory prompt; remembered in `~/.config/adlc/config`.
+- Delegation always does the whole step (coder + tester together) — no split mode.
+- The specific MCP server/tool names are supplied by you as local config values (`delegate_create_task_tool`, `delegate_get_task_tool`, `delegate_repo_param`) — never hardcoded in the plugin.
+- Steps in a wave are submitted and polled in parallel (cheap I/O), but their resulting branches are merged into the local working tree one at a time, sequentially, after the wave completes — parallel git operations on one shared tree aren't safe.
+- To change your choice later, edit or delete the `implementer_runner` key in `~/.config/adlc/config`.

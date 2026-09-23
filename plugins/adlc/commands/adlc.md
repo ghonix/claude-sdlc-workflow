@@ -39,6 +39,40 @@ cat ~/.config/adlc/config 2>/dev/null
 
 Call the resolved absolute path `<workspace_dir>` for the rest of this run.
 
+## Implementer Runner Configuration
+
+Also resolve how implementation steps get executed. Read the same config file:
+
+```bash
+cat ~/.config/adlc/config 2>/dev/null
+```
+
+- If it contains `implementer_runner`, use that value (`local` or `delegate`) as `<implementer_runner>`.
+- If missing (first run, or first run after this feature shipped), use `AskUserQuestion`:
+
+  > "How should ADLC implement code? Local writes code and tests directly in this session (default, works out of the box). Delegate hands each step's coding + testing to an external coding-agent MCP tool that you configure — this conserves this session's tokens, at the cost of async wait time per step and requiring you to already have that MCP server set up."
+
+  Options: "Local (default)", "Delegate to external agent"
+
+- If the user picks Delegate, also collect the exact tool names via a plain-text follow-up (these are specific to whatever MCP server the user has installed — never assume or hardcode a server name):
+  > "What are the exact MCP tool names for your delegate agent's task-creation and status-check tools? (e.g. `mcp__my-agent-server__create_task` and `mcp__my-agent-server__get_task`). Also, what value should be passed as the repo/project identifier?"
+
+  Write all of it back to the same config file:
+  ```bash
+  python3 -c "
+  import json
+  path = '$HOME/.config/adlc/config'
+  with open(path) as f: data = json.load(f)
+  data['implementer_runner'] = '<local|delegate>'
+  data['delegate_create_task_tool'] = '<tool name, omit if local>'
+  data['delegate_get_task_tool'] = '<tool name, omit if local>'
+  data['delegate_repo_param'] = '<repo identifier value, omit if local>'
+  with open(path, 'w') as f: json.dump(data, f)
+  "
+  ```
+
+Call the resolved value `<implementer_runner>` for the rest of this run. To change it later, edit `~/.config/adlc/config` directly or delete the `implementer_runner` key to be re-prompted.
+
 ## Context Sources
 
 After resolving `<workspace_dir>`, check for a context source config:
@@ -436,7 +470,15 @@ Read the Execution Graph from `2-plan-brief.md`.
 
 #### Per-step spawning
 
-For each step in the current wave, choose between:
+If `<implementer_runner> == "delegate"`: spawn ONE implementer per step with `Runner: delegate` (no coder/tester split — delegation always does both):
+```
+Agent(subagent_type="adlc-implementer", description="Delegate: Implement S1",
+  prompt="Project directory: <project-dir>\nRunner: delegate\nDepth: <depth>\n\nDelegate Tools:\n  create_task: <delegate_create_task_tool>\n  get_task: <delegate_get_task_tool>\n  repo_param: <delegate_repo_param>\n\nImplement step S1. Task: <task>",
+  run_in_background=true)
+```
+Launch all steps in the current wave this way in parallel (same as combined/split mode below) — submission and polling are cheap I/O waits, not token-heavy. After all of the wave's delegated implementers complete, run **Git Integration for Delegated Steps** (below) before moving on.
+
+Otherwise (`local`, default), choose between:
 
 **Combined mode** (default, simpler): one implementer per step with `Mode: both`.
 ```
@@ -463,6 +505,17 @@ Use split mode when the step involves >1 file of implementation AND has >2 accep
 Execute waves sequentially. Within each wave, launch all step agents (combined or split) in a single message with multiple tool calls so they run concurrently.
 
 **Important**: Parallel steps within a wave MUST NOT modify the same files. Coder + tester for the SAME step can run in parallel because the tester writes test files (different paths) while the coder writes implementation files.
+
+#### Git Integration for Delegated Steps (`implementer_runner == "delegate"` only)
+
+Delegated implementers only record branch metadata — they never touch the local working tree, since multiple steps in a wave run concurrently against a shared tree. Integrate their results **one at a time, sequentially**, after all of the wave's delegated implementers complete:
+
+For each step in the wave (in step-ID order):
+1. Read `4-implementation-S<N>.md` for the recorded branch name and status.
+2. If status is `failed` or `timed out`: surface it in the wave summary; do NOT attempt integration for that step. Let the human decide (retry via `Runner: local`, or re-submit to the delegate agent).
+3. If status is `completed`: `git fetch origin <branch>` then `git merge --no-ff origin/<branch>`. If the merge conflicts, stop and surface the conflict in the gate message — do not auto-resolve.
+
+Only after all steps in the wave are integrated (or explicitly deferred to the human) does the wave count as complete.
 
 #### Inner fix loop
 
