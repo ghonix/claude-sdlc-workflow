@@ -20,14 +20,14 @@ The PM phase is optional — use it to define **what to build and why** before t
 
 | Agent | Phase | Model | Role |
 |-------|-------|-------|------|
-| `adlc-pm` | 0. Proposal | fable | Product Manager: gathers requirements, asks clarifying questions, produces a structured proposal before any code is touched |
+| `adlc-pm` | 0. Proposal | opus | Product Manager: gathers requirements, asks clarifying questions, produces a structured proposal before any code is touched |
 | `adlc` | Orchestrator | sonnet | Coordinates parallel sub-agents, manages wave execution and human gates |
 | `adlc-researcher` | 1. Research | sonnet | Director: dispatches scouts, analyzes evidence, writes research brief |
 | `adlc-scout` | 1. Research | haiku | Lightweight search agent: finds files, greps patterns, writes structured evidence to disk |
-| `adlc-planner` | 2. Plan | fable/sonnet | Architect (fable) designs approach; breakdown (sonnet) produces step graph |
-| `adlc-qa` | 3. QA | sonnet/fable | Criteria (sonnet) + adversary (fable) run in parallel; synthesizer merges |
+| `adlc-planner` | 2. Plan | opus/sonnet | Architect (opus) designs approach; breakdown (sonnet) produces step graph |
+| `adlc-qa` | 3. QA | sonnet/opus | Criteria (sonnet) + adversary (opus) run in parallel; synthesizer merges |
 | `adlc-implementer` | 4. Implement | sonnet | Parallel per-wave, reads only scoped briefs for assigned steps |
-| `adlc-verifier` | 5. Verify | sonnet/fable | Evidence modes (sonnet) gather in parallel; synthesizer (fable) produces verdict |
+| `adlc-verifier` | 5. Verify | sonnet/opus | Evidence modes (sonnet) gather in parallel; synthesizer (opus) produces verdict |
 
 ## Usage
 
@@ -79,7 +79,7 @@ For parallel execution, implementers write scoped summaries: `4-implementation-S
 
 ## Key Design Decisions
 
-- **Reasoning at the boundaries**: Plan and Verify use fable (decisions), Research/QA/Implement use sonnet (execution)
+- **Reasoning at the boundaries**: Plan and Verify use opus (decisions), Research/QA/Implement use sonnet (execution)
 - **Shift-left QA**: Acceptance criteria are defined BEFORE implementation, not after
 - **TDD-first bug fixes**: Researcher writes a failing reproduction test before finalizing the brief; planner anchors the fix design on making that test pass
 - **Feature gating**: Researcher discovers the project's gating framework, planner designs the strategy, implementer enforces it

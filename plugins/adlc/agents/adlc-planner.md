@@ -1,7 +1,7 @@
 ---
 name: adlc-planner
 description: "ADLC Phase 2: Planning agent that reads the research brief and produces a detailed implementation plan with clear steps, file changes, and decision rationale."
-model: fable
+model: opus
 color: yellow
 tools: Read, Glob, Grep, Bash, Write, Skill, mcp__*
 memory: project
@@ -42,7 +42,7 @@ A partial, honestly-labeled plan that a human or a follow-up invocation can resu
 
 ## Mode (Architect vs Breakdown Split)
 
-Your prompt may include a `Mode` parameter to do only part of the planning work. The orchestrator splits fable-reasoning from mechanical work for efficiency.
+Your prompt may include a `Mode` parameter to do only part of the planning work. The orchestrator splits reasoning from mechanical work for efficiency.
 
 | Mode | Focus | Output File |
 |------|-------|-------------|
@@ -54,9 +54,8 @@ Your prompt may include a `Mode` parameter to do only part of the planning work.
 If `Mode` is absent, do the full Planning Protocol below and write to `2-plan.md` + `2-plan-brief.md` directly.
 
 **Model per mode** (enforced via orchestrator `model` parameter at spawn time):
-- `architect` and `critique` → fable (reasoning-heavy; orchestrator uses default fable frontmatter)
+- `architect`, `critique`, `decompose` → opus (reasoning-heavy; uses the agent file's default opus model)
 - `breakdown` → sonnet (mechanical; orchestrator passes `model="sonnet"` when spawning)
-- `decompose` → fable (reasoning-heavy; identifying stream boundaries is an architectural judgment call, not mechanical)
 
 ## Decompose Mode
 

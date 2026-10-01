@@ -154,7 +154,7 @@ This section implements `process_project(<project-dir>)`. Treat it as a function
 
 If `<project-dir>/project.yaml` does not exist yet (this only happens on the very first entry into hierarchical mode, since `## Project Mode Detection` already routed us here based on its presence — this check matters for recursive re-entries, where a sub-stream directory might not have a `project.yaml` of its own yet and should instead go through the Leaf path, never here):
 
-1. Spawn `Agent(subagent_type="adlc-planner", model="fable", description="Decompose project", prompt="Project directory: <project-dir>\nMode: decompose\nDepth: <depth>\n\nTask: <task>")`. **Model fallback**: if this errors out, retry once with `model="opus"` instead — see "Model Fallback" under Rules.
+1. Spawn `Agent(subagent_type="adlc-planner", description="Decompose project", prompt="Project directory: <project-dir>\nMode: decompose\nDepth: <depth>\n\nTask: <task>")`.
 2. Present the proposed `project.yaml` (streams, `depends_on` graph, `gate_strategy`) to the user.
 3. **Gate**: "Proposed decomposition into N streams with `gate_strategy: <value>`. Review `<project-dir>/project.yaml`. Approve, edit, or cancel?" Do NOT create any `<project-dir>/<stream-slug>/` directory and do NOT proceed to Step 1 until the user approves (editing `project.yaml` in place counts as approval of the edited version — re-read it after edits).
 4. Once approved, create empty stream directories: `mkdir -p "<project-dir>/<stream-slug>"` for every entry in `streams[]`. Do not put anything else in them yet — each stream's own pipeline creates its own artifacts when its turn comes up.
@@ -406,25 +406,25 @@ Present a brief summary to the user (key files, top risks, open questions).
 
 ### Phase 2: Plan (Architect → Breakdown)
 
-#### Step 2a: Architect (fable)
+#### Step 2a: Architect (opus)
 
 ```
-Agent(subagent_type="adlc-planner", model="fable", description="Architect approach",
+Agent(subagent_type="adlc-planner", description="Architect approach",
   prompt="Project directory: <project-dir>\nMode: architect\nDepth: <depth>\n\nRead 1-research-brief.md. Task: <task>")
 ```
 
-Produces `2-architecture.md`. **Model fallback**: if this call errors out (fable unavailable/errored), retry once with `model="opus"` instead — see "Model Fallback" under Rules.
+Produces `2-architecture.md`.
 
-#### Step 2b: Critique (fable, optional)
+#### Step 2b: Critique (opus, optional)
 
 If `Depth: thorough`, spawn critic in parallel with breakdown:
 ```
-Agent(subagent_type="adlc-planner", model="fable", description="Critique architecture",
+Agent(subagent_type="adlc-planner", description="Critique architecture",
   prompt="Project directory: <project-dir>\nMode: critique\nDepth: <depth>\n\nRead 2-architecture.md. Task: <task>",
   run_in_background=true)
 ```
 
-Produces `2-architecture-critique.md`. The breakdown agent should read it. Same fable→opus fallback applies if this errors.
+Produces `2-architecture-critique.md`. The breakdown agent should read it.
 
 #### Step 2c: Breakdown (sonnet)
 
@@ -447,7 +447,7 @@ Agent(subagent_type="adlc-qa", description="QA criteria",
   prompt="Project directory: <project-dir>\nMode: criteria\nDepth: <depth>\n\nRead 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 
-Agent(subagent_type="adlc-qa", model="fable", description="QA adversary",
+Agent(subagent_type="adlc-qa", model="opus", description="QA adversary",
   prompt="Project directory: <project-dir>\nMode: adversary\nDepth: <depth>\n\nRead 1-research-brief.md and 2-plan-brief.md. Task: <task>",
   run_in_background=true)
 ```
@@ -555,7 +555,7 @@ Agent(subagent_type="adlc-verifier", model="sonnet", description="Verify: code r
   run_in_background=true)
 ```
 
-When all evidence agents complete, spawn synthesizer (fable):
+When all evidence agents complete, spawn synthesizer (opus):
 ```
 Agent(subagent_type="adlc-verifier", description="Verify: synthesize",
   prompt="Project directory: <project-dir>\nMode: synthesize\nDepth: <depth>\n\nRead all 5-verify-*.md files. Task: <task>")
@@ -619,4 +619,3 @@ The table above still applies unchanged for flat projects and for the Leaf Task 
 4. **Pass task + project dir + depth + mode** — every agent prompt MUST include all four.
 5. **Use briefs downstream** — once `1-research-brief.md` exists, downstream phases read the brief, not the full artifact (unless explicitly noted).
 6. **Don't do the work yourself** — invoke phase agents.
-7. **Model Fallback (fable → opus)** — every planner spawn that uses `model="fable"` (architect, critique, decompose) is reasoning-critical: if the Agent call itself errors out (model unavailable, overloaded, or otherwise failed to produce output — not a disagreement with the content it produced), retry the SAME call once with `model="opus"` instead of fable before giving up. Do not silently fall back to sonnet — sonnet is reserved for the mechanical `breakdown` mode, not architecture-level reasoning. If the opus retry also fails, surface the error to the user rather than retrying further.

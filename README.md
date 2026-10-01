@@ -47,7 +47,7 @@ Each phase produces tiered artifacts (full + compact brief + per-step slices) in
          Phase 1                                    Phase 2
     ┌──────────────────────┐              ┌──────────────────────────┐
     │      RESEARCH         │              │          PLAN             │
-    │  code ∥ patterns ∥    │──[Gate]─────▶│  architect (fable)       │
+    │  code ∥ patterns ∥    │──[Gate]─────▶│  architect (opus)        │
     │  history → synthesize │              │  → breakdown (sonnet)     │
     │  (scouts do search)   │              │  +critique if thorough    │
     └───────────────────────┘              └────────────┬──────────────┘
@@ -67,7 +67,7 @@ Each phase produces tiered artifacts (full + compact brief + per-step slices) in
                                            ┌──────────────────────────────┐
                                            │            VERIFY              │
                                            │ 4 parallel evidence agents      │
-                                           │   → synthesize (fable)          │
+                                           │   → synthesize (opus)          │
                                            └──────────────────────────────┘
                                            → 5-verification.md
 ```
@@ -78,7 +78,7 @@ Each phase produces tiered artifacts (full + compact brief + per-step slices) in
 
 ### Phase 0: PM Proposal (optional)
 
-**Agent**: `adlc-pm` · **Model**: fable · **Tools**: read-only + write + `AskUserQuestion`
+**Agent**: `adlc-pm` · **Model**: opus · **Tools**: read-only + write + `AskUserQuestion`
 
 **Goal**: Turn a rough idea into a structured proposal before any research or code is touched.
 
@@ -125,16 +125,16 @@ Research Brief
 
 ### Phase 2: Plan (Architect → Breakdown)
 
-**Agent**: `adlc-planner` · **Model**: fable (architect/critique) / sonnet (breakdown)
+**Agent**: `adlc-planner` · **Model**: opus (architect/critique) / sonnet (breakdown)
 
 **Goal**: Design the implementation approach with explicit architecture comparison, feature gating strategy, and a parallelizable execution graph — with reasoning and mechanical work split across model tiers.
 
 **What it does**:
 
-1. **Architect mode (fable)** — reads the research brief and declared context sources (ERDs, PRDs, design docs), maps current vs. proposed architecture, evaluates alternatives, designs the feature gating strategy. If the research brief confirms a bug reproduction, anchors the design on making that test pass. Writes `2-architecture.md`.
-2. **Critique mode (fable, `thorough` depth only)** — runs in parallel with breakdown as a devil's advocate, challenging the chosen approach.
+1. **Architect mode (opus)** — reads the research brief and declared context sources (ERDs, PRDs, design docs), maps current vs. proposed architecture, evaluates alternatives, designs the feature gating strategy. If the research brief confirms a bug reproduction, anchors the design on making that test pass. Writes `2-architecture.md`.
+2. **Critique mode (opus, `thorough` depth only)** — runs in parallel with breakdown as a devil's advocate, challenging the chosen approach.
 3. **Breakdown mode (sonnet)** — reads `2-architecture.md`, breaks the work into atomic, testable, uniquely-IDed steps (S1, S2, ...) and builds the execution graph. For bug fixes, makes S1 promote the reproduction test into the permanent suite.
-4. **Decompose mode (fable, hierarchical projects only)** — for tasks large enough to split into independent streams, proposes a `project.yaml` graph instead of a flat step list; each stream later runs its own full pipeline.
+4. **Decompose mode (opus, hierarchical projects only)** — for tasks large enough to split into independent streams, proposes a `project.yaml` graph instead of a flat step list; each stream later runs its own full pipeline.
 
 **Artifact**: `2-plan.md` (full) + `2-plan-brief.md` (compact) + per-step briefs (`2-plan-S1.md`, ...)
 
@@ -159,7 +159,7 @@ Implementation Plan
 └── External References (ADRs, docs, RFCs that informed the plan)
 ```
 
-**Why architect uses fable, breakdown uses sonnet**: The planner makes its highest-stakes decisions during architecture design — approach, gating strategy, parallelism safety. Once the architecture is fixed, turning it into a step list with file assignments is mechanical and doesn't need the reasoning model.
+**Why architect uses opus, breakdown uses sonnet**: The planner makes its highest-stakes decisions during architecture design — approach, gating strategy, parallelism safety. Once the architecture is fixed, turning it into a step list with file assignments is mechanical and doesn't need the reasoning model.
 
 **Why current vs proposed architecture matters**: Without the explicit "before → after" comparison, plans tend to describe only the new state. This leaves the implementer guessing about what exists today and which changes are intentional vs accidental.
 
@@ -169,14 +169,14 @@ Implementation Plan
 
 ### Phase 3: QA (Shift-Left)
 
-**Agent**: `adlc-qa` · **Model**: sonnet (criteria) / fable (adversary)
+**Agent**: `adlc-qa` · **Model**: sonnet (criteria) / opus (adversary)
 
 **Goal**: Define acceptance criteria, edge cases, and test plan BEFORE implementation begins — with mechanical extraction and adversarial reasoning running in parallel.
 
 **What it does**:
 
 1. **Criteria mode (sonnet)** — mechanically extracts acceptance criteria per plan step and builds the test plan (which files, what test cases) directly from the plan
-2. **Adversary mode (fable)** — reads the research and plan briefs and thinks adversarially: edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries
+2. **Adversary mode (opus)** — reads the research and plan briefs and thinks adversarially: edge cases, failure modes, concurrency/boundary issues, plan gaps, regression boundaries
 3. **Synthesize** — merges both into the full QA brief + compact brief + per-step briefs implementers actually read
 
 Reads declared **context sources** (test standards, quality checklists, PRDs) to ground acceptance criteria and edge cases in team conventions rather than guessing.
@@ -239,7 +239,7 @@ Implementation Summary
 
 ### Phase 5: Verify (Parallel Evidence + Synthesize)
 
-**Agent**: `adlc-verifier` · **Model**: sonnet (evidence modes) / fable (synthesize)
+**Agent**: `adlc-verifier` · **Model**: sonnet (evidence modes) / opus (synthesize)
 
 **Goal**: Independently validate that the implementation is correct, complete, and ready for review — by gathering evidence in parallel, then applying judgment once.
 
@@ -250,7 +250,7 @@ Implementation Summary
    - `test-run` — runs the test suite, parses pass/fail counts, checks which tests are new
    - `code-review` — delegates to the `code-reviewer` sub-agent for correctness, security, performance
    - `regression-check` — confirms regression boundaries from the QA brief weren't crossed
-2. **Synthesize (fable, the only judgment-heavy mode)** — reads all four evidence files and produces the final verdict; reads declared context sources (review checklists, test standards) as additional criteria
+2. **Synthesize (opus, the only judgment-heavy mode)** — reads all four evidence files and produces the final verdict; reads declared context sources (review checklists, test standards) as additional criteria
 
 **Artifact**: `5-verification.md`
 
@@ -267,7 +267,7 @@ Verification Report
 └── Recommendation (SHIP IT / FIX AND RE-VERIFY / NEEDS REWORK)
 ```
 
-**Why only synthesize uses fable**: Verification's judgment call — is a deviation acceptable, does a test adequately cover an edge case, is the overall implementation sound — happens once, after all evidence is in. A false PASS is worse than a false FAIL, so that one decision gets the reasoning model; gathering the evidence it reasons over doesn't need to.
+**Why only synthesize uses opus**: Verification's judgment call — is a deviation acceptable, does a test adequately cover an edge case, is the overall implementation sound — happens once, after all evidence is in. A false PASS is worse than a false FAIL, so that one decision gets the reasoning model; gathering the evidence it reasons over doesn't need to.
 
 **Why the verifier delegates code review**: The `code-reviewer` agent is a specialist — it knows how to evaluate code quality, security, and performance. The verifier's job is broader: it checks the implementation against the plan, QA criteria, and regression boundaries.
 
@@ -279,17 +279,15 @@ Verification Report
 |-------|-------|-----------|
 | Research (all scopes) | sonnet | Fast exploration, read-heavy, no decisions |
 | Research (scout) | haiku | Pure search execution, no analysis |
-| Plan — architect/critique | **fable** | Architectural decisions, tradeoff analysis, gating strategy |
+| Plan — architect/critique/decompose | **opus** | Architectural decisions, tradeoff analysis, gating strategy |
 | Plan — breakdown | sonnet | Mechanical: turns a fixed architecture into a step list |
 | QA — criteria | sonnet | Mechanical extraction from the plan |
-| QA — adversary | **fable** | Adversarial reasoning about edge cases and gaps |
+| QA — adversary | **opus** | Adversarial reasoning about edge cases and gaps |
 | Implement | sonnet | Follows a detailed blueprint, speed over reasoning |
 | Verify — evidence modes | sonnet | Mechanical evidence gathering (run tests, check criteria) |
-| Verify — synthesize | **fable** | Judgment calls on correctness, nuanced evaluation |
+| Verify — synthesize | **opus** | Judgment calls on correctness, nuanced evaluation |
 
 The principle: **reason at the boundaries, execute in the middle**. Decisions get the reasoning model; execution and evidence-gathering get the fast model — and within a phase, the two are split into separate modes so neither waits on the other unnecessarily.
-
-**Fallback**: the planner's fable spawns (architect, critique, decompose) retry once with `opus` if the call itself errors out — never silently downgrading to sonnet, since that's the mechanical model, not the reasoning one.
 
 ---
 
@@ -484,10 +482,11 @@ Use the adlc-verifier agent to verify [implementation]
 
 ### v2.3.1
 
-Fable → opus fallback for planner reasoning spawns.
+Switch reasoning model from fable to opus.
 
-- **Orchestrator**: planner spawns that use `model="fable"` (architect, critique, decompose) now retry once with `model="opus"` if the call itself errors out, instead of giving up or silently falling back to sonnet
-- Sonnet stays reserved for the mechanical `breakdown` mode only
+- **Planner, Verifier, PM**: `model: fable` → `model: opus` in agent frontmatter — fable 403s on accounts without access; opus is universally available and handles reasoning equally well
+- **Orchestrator**: removed the fable→opus fallback rule (no longer needed); dropped explicit `model="fable"` overrides from planner spawn calls; QA adversary now spawned with `model="opus"`
+- Sonnet stays reserved for the mechanical modes only (breakdown, criteria, evidence gathering)
 
 ### v2.3.0
 
@@ -531,9 +530,9 @@ Hierarchical project management.
 
 ### v1.3.1
 
-Switch reasoning-tier model from opus to fable.
+Switch reasoning-tier model from opus to fable (reverted in v2.3.1).
 
-- **Model rename**: all agents previously using `model: opus` now use `model: fable` — PM, orchestrator, planner, verifier
+- **Model rename**: all agents previously using `model: opus` changed to `model: fable` — PM, orchestrator, planner, verifier
 
 ### v1.3.0
 
@@ -578,4 +577,4 @@ Initial release.
 - Feature gating discovery, strategy design, and enforcement across all phases
 - Human gates between every phase with skip/revise/abort options
 - File-based artifact passing via workspace directory
-- Model allocation: fable for reasoning (Plan, Verify), sonnet for execution (Research, QA, Implement)
+- Model allocation: opus for reasoning (Plan, Verify), sonnet for execution (Research, QA, Implement)
