@@ -1,6 +1,6 @@
 # ADLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v2.3.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v2.3.1-blue?style=flat)
 
 A structured, agent-driven Agentic Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each phase itself decomposed into parallel sub-agents, with a concrete artifact and a human gate.
 
@@ -289,6 +289,8 @@ Verification Report
 
 The principle: **reason at the boundaries, execute in the middle**. Decisions get the reasoning model; execution and evidence-gathering get the fast model — and within a phase, the two are split into separate modes so neither waits on the other unnecessarily.
 
+**Fallback**: the planner's fable spawns (architect, critique, decompose) retry once with `opus` if the call itself errors out — never silently downgrading to sonnet, since that's the mechanical model, not the reasoning one.
+
 ---
 
 ## Artifacts and Data Flow
@@ -479,6 +481,13 @@ Use the adlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v2.3.1
+
+Fable → opus fallback for planner reasoning spawns.
+
+- **Orchestrator**: planner spawns that use `model="fable"` (architect, critique, decompose) now retry once with `model="opus"` if the call itself errors out, instead of giving up or silently falling back to sonnet
+- Sonnet stays reserved for the mechanical `breakdown` mode only
 
 ### v2.3.0
 
