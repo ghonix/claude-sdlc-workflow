@@ -2,7 +2,7 @@
 
 ## Overview
 
-**v2.2.0** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
+**v2.3.0** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
 
 ## Pipeline
 
@@ -86,6 +86,7 @@ For parallel execution, implementers write scoped summaries: `4-implementation-S
 - **Parallel waves**: Planner groups independent steps into waves; orchestrator dispatches parallel implementers per wave
 - **Context sources**: Teams declare project-specific files (ERDs, PRDs, architecture docs) per agent role via `context.yaml`; agents read them before starting their protocol
 - **Opt-in delegated implementation**: implementation steps can be handed off to an externally-configured coding-agent MCP tool instead of running locally, trading session tokens for async wait time
+- **Turn budget checkpointing**: planner and QA write a partial, clearly-labeled artifact if they're about to exhaust their turn limit, instead of losing all progress silently
 - **File-based data passing**: Each phase writes artifacts to disk — survives context limits, human-reviewable between phases
 - **Persistent memory**: Agents learn across runs via `memory: project` — codebase patterns, past decisions, and failure patterns survive between sessions
 

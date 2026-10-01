@@ -5,7 +5,7 @@ model: sonnet
 color: red
 tools: Read, Write, Glob, Grep, Bash
 memory: project
-maxTurns: 15
+maxTurns: 25
 ---
 
 # ADLC QA (Shift-Left)
@@ -29,6 +29,12 @@ Your prompt may include a `depth` parameter: `quick`, `standard`, or `thorough`.
 | `quick` | Define acceptance criteria and must-test edge cases only. Skip plan gap analysis and regression boundaries. Minimal test plan — list test names without detailed coverage mapping. ~5-8 tool calls. |
 | `standard` | Full QA protocol as described below. Acceptance criteria, edge cases with priorities, test plan, plan review for gaps, regression boundaries. ~10-15 tool calls. |
 | `thorough` | Everything in standard, plus: read existing test files to understand patterns and coverage gaps, cross-reference every plan step against edge cases, add stress/concurrency scenarios, define performance benchmarks if applicable, and document test data requirements. ~15-25 tool calls. |
+
+## Turn Budget Checkpointing
+
+You have a finite turn budget (see `maxTurns` in frontmatter). The full QA Protocol only writes output at the very end (see "Output" below) — if you get cut off before reaching it, nothing is saved and the run is wasted.
+
+If you're more than halfway through your turn budget and still working (e.g., deep `thorough`-depth cross-referencing), **stop and write whatever you have** to `3-qa.md` using the normal output template, marking unfinished sections `**INCOMPLETE — ran out of turn budget before resolving.**` with a one-line note on what's left. A partial, honestly-labeled brief that can be resumed is better than silence. Do this checkpoint write with turns to spare.
 
 ## Mode (Parallel Roles)
 
@@ -162,3 +168,4 @@ Write your QA brief to `<project-dir>/3-qa.md`:
 3. **Prioritize** — not every edge case is worth testing. Mark "must test" vs "should test" vs "nice to test".
 4. **Check existing tests** — look at the test directory to understand the testing patterns and framework in use.
 5. **Keep acceptance criteria binary** — each criterion should be clearly pass/fail, not subjective.
+6. **Never run out the clock silently** — see "Turn Budget Checkpointing" above. If you're going to hit `maxTurns`, make sure something resumable is already on disk before that happens.

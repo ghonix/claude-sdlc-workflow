@@ -1,6 +1,6 @@
 # ADLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v2.2.0-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v2.3.0-blue?style=flat)
 
 A structured, agent-driven Agentic Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each phase itself decomposed into parallel sub-agents, with a concrete artifact and a human gate.
 
@@ -479,6 +479,14 @@ Use the adlc-verifier agent to verify [implementation]
 ---
 
 ## Changelog
+
+### v2.3.0
+
+Turn budget fixes for planner and QA.
+
+- **`adlc-planner`**: `maxTurns` raised 20 → 35 to actually cover the documented `thorough`-depth tool call count; added a "Turn Budget Checkpointing" rule — if the agent is more than halfway through its turn budget and still mid-investigation, it stops and writes a partial, clearly-labeled plan instead of being cut off with nothing saved
+- **`adlc-qa`**: same fix — `maxTurns` raised 15 → 25, same checkpointing behavior for `3-qa.md`
+- Previously, hitting the turn limit mid-run produced no artifact at all, since both agents only wrote output at the very end of their protocol
 
 ### v2.2.0
 
