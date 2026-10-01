@@ -1,6 +1,6 @@
 # ADLC Workflow for Claude Code
 
-![Version](https://img.shields.io/badge/version-v2.3.1-blue?style=flat)
+![Version](https://img.shields.io/badge/version-v2.3.2-blue?style=flat)
 
 A structured, agent-driven Agentic Development Lifecycle that brings engineering rigor to AI-assisted coding. Instead of asking Claude to "just build it," this workflow decomposes development into five disciplined phases — each phase itself decomposed into parallel sub-agents, with a concrete artifact and a human gate.
 

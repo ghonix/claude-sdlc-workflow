@@ -2,7 +2,7 @@
 
 ## Overview
 
-**v2.3.1** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
+**v2.3.2** — A parallel-first Agentic Development Lifecycle (ADLC) workflow for Claude Code. Each phase decomposes into specialized sub-agents that run concurrently, with tiered artifact outputs (full + compact briefs + per-step slices) to minimize downstream token cost.
 
 ## Pipeline
 
